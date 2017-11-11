@@ -41,6 +41,7 @@
 
 #define P7TRACE_INFO_FLAG_BIG_ENDIAN                                    (0x0001)
 #define P7TRACE_INFO_FLAG_UNSORTED                                      (0x0002)
+#define P7TRACE_INFO_FLAG_EXTENTION                                     (0x0004)
 
 enum eTrace_Arg_Type
 {
@@ -101,6 +102,14 @@ enum eP7Trace_Type
 
     EP7TRACE_TYPE_MAX           = 32 
 };
+
+////////////////////////////////////////////////////////////////////////////////
+enum eP7Trace_Ext
+{
+    EP7TRACE_EXT_MODULE_ID      =  0, 
+    EP7TRACE_EXT_MAX            = 256 
+};
+
 
 ////////////////////////////////////////////////////////////////////////////////
 enum eP7Tel_Type
@@ -257,7 +266,15 @@ struct sP7Trace_Data
     tUINT64       qwTimer;      //High resolution timer value
     //At the end of structure we put serialized data:
     // - trace variable arguments values
+    // - extensions [data X bits][type 8 bits], [data X bits][type 8 bits], ... [count 8 bits]
 } ATTR_PACK(2);
+
+//trace ext header for Module ID
+struct sP7Trace_Ext_Mid
+{
+    tUINT16 wMID; 
+} ATTR_PACK(2);
+
 
 //trace verbosity header
 struct sP7Trace_Verb

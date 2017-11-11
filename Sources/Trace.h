@@ -238,6 +238,7 @@ struct sData_Block
 class CP7Trace_Desc
 {
     tUINT16        m_wID;
+    tUINT16        m_wModuleID;
     //count of connections drops... see sP7C_Status. If this value and 
     //value from IP7_Client are different - it mean we loose connection
     tUINT32        m_dwResets; 
@@ -285,6 +286,7 @@ public:
     tBOOL    Is_Greater(tKeyType *i_pKey);
 
     tUINT16  Get_ID();
+    tUINT16  Get_MID();
 };//CP7Trace_Desc
 
 
@@ -464,6 +466,8 @@ class CP7Trace:
 
     tUINT8            *m_pVargs;
     size_t             m_szVargs;
+
+    tUINT8             m_pExtensions[4];
 
     stTrace_Conf       m_sConf;
 

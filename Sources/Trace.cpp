@@ -40,6 +40,7 @@
 #define FORMAT_FILE_UNKNOWN           "-------"
 #define FORMAT_FUNC_UNKNOWN           "-------"
 #define TRACE_SHARED_PREFIX                                       TM("Trc_")
+#define TRACE_EXTRA_CHUNKS                                        (5)
 
 #if !defined(UINTMAX_MAX)
     typedef uint64_t uintmax_t;
@@ -238,6 +239,7 @@ CP7Trace_Desc::CP7Trace_Desc(CMemoryManager &i_rMemory,
                              tUINT32         i_dwFlags
                             )
     : m_wID(i_wID)
+    , m_wModuleID(i_wModuleID)
     , m_dwResets(RESET_UNDEFINED)
     , m_dwSize(0)
     , m_pBuffer(NULL)
@@ -694,6 +696,7 @@ CP7Trace_Desc::CP7Trace_Desc(CMemoryManager &i_rMemory,
                              tKeyType        i_pKeys[P7TRACE_KEY_LENGTH]
                             )
     : m_wID(i_wID)
+    , m_wModuleID(i_wModuleID)
     , m_dwResets(RESET_UNDEFINED)
     , m_dwSize(0)
     , m_pBuffer(NULL)
@@ -945,6 +948,14 @@ tUINT16 CP7Trace_Desc::Get_ID()
     return m_wID;
 } //Get_ID
 
+////////////////////////////////////////////////////////////////////////////////
+// Get_MID                                       
+tUINT16 CP7Trace_Desc::Get_MID()
+{
+    return m_wModuleID;
+} // Get_MID
+
+
 
 ////////////////////////////////////////////////////////////////////////////////
 // CP7Trace                                       
@@ -1039,7 +1050,7 @@ CP7Trace::CP7Trace(IP7_Client         *i_pClient,
 
         GetEpochTime(&m_sHeader_Info.dwTime_Hi, &m_sHeader_Info.dwTime_Lo);
 
-        m_sHeader_Info.qwFlags   = 0;
+        m_sHeader_Info.qwFlags = P7TRACE_INFO_FLAG_EXTENTION;
 
         //Add main header to delivery chunks list
         m_pChk_Curs->dwSize = sizeof(m_sHeader_Info);
@@ -2329,6 +2340,7 @@ __forceinline tBOOL CP7Trace::Trace_Raw(tUINT16            i_wTrace_ID,
     tUINT32          l_dwBCount = 0;
     tUINT8          *l_pVArgs   = (tUINT8*)(i_ppFormat) + sizeof(tXCHAR*);
     tBOOL            l_bDesc    = FALSE;
+    size_t           l_szTrace  = 0;
     sP7C_Data_Chunk *l_pChunk; //we do not initialize it here, we do it later
 
     LOCK_ENTER(m_sCS);
@@ -2428,10 +2440,10 @@ __forceinline tBOOL CP7Trace::Trace_Raw(tUINT16            i_wTrace_ID,
     l_pBlocks = l_pDesc->Get_Blocks(&l_dwBCount);
     //increase chunks count if it is necessary
     if (    (l_dwBCount)
-         && ((m_pChk_Curs + l_dwBCount + 4) >= m_pChk_Tail)
+         && ((m_pChk_Curs + l_dwBCount + TRACE_EXTRA_CHUNKS) >= m_pChk_Tail)
        )
     {
-        if (FALSE == Inc_Chunks(l_dwBCount + 4))
+        if (FALSE == Inc_Chunks(l_dwBCount + TRACE_EXTRA_CHUNKS))
         {
             l_bReturn = FALSE;
             goto l_lblExit;
@@ -2453,7 +2465,8 @@ __forceinline tBOOL CP7Trace::Trace_Raw(tUINT16            i_wTrace_ID,
     }
 
     //we should also add all variable parameters length ... later
-    SET_EXT_HEADER_SIZE(m_sHeader_Data.sCommonRaw, sizeof(m_sHeader_Data));
+    l_szTrace = sizeof(m_sHeader_Data);
+    //SET_EXT_HEADER_SIZE(m_sHeader_Data.sCommonRaw, );
     //m_sHeader_Data.sCommon.dwSize = sizeof(m_sHeader_Data); 
 
     m_sHeader_Data.bLevel     = (tUINT8)i_eLevel;
@@ -2615,14 +2628,38 @@ __forceinline tBOOL CP7Trace::Trace_Raw(tUINT16            i_wTrace_ID,
             l_pVArgs += sizeof(wchar_t*);
         }
 
-        SET_EXT_HEADER_SIZE(m_sHeader_Data.sCommonRaw, GET_EXT_HEADER_SIZE(m_sHeader_Data.sCommonRaw) + l_pChunk->dwSize);
-        //m_sHeader_Data.sCommon.dwSize += l_pChunk->dwSize;
+        l_szTrace += (size_t)l_pChunk->dwSize;
 
         l_pChunk ++;
         l_pBlocks++;
     }
 
-    l_dwSize += GET_EXT_HEADER_SIZE(m_sHeader_Data.sCommonRaw);//m_sHeader_Data.sCommon.dwSize;
+    //Put extensions.../////////////////////////////////////////////////////////////
+    if (i_hModule)
+    {
+    #if defined(__linux__) //fix alignment and GCC warnings
+        memcpy(m_pExtensions, &(((sP7Trace_Module*)i_hModule)->wModuleID), sizeof(tUINT16));
+    #else
+        *(tUINT16*)m_pExtensions = ((sP7Trace_Module*)i_hModule)->wModuleID;
+    #endif
+
+        m_pExtensions[2]         = (tUINT8)EP7TRACE_EXT_MODULE_ID;
+        m_pExtensions[3]         = 1;
+        l_pChunk->pData          = m_pExtensions;
+        l_pChunk->dwSize         = 4u;
+    }
+    else
+    {
+        m_pExtensions[0]         = 0;
+        l_pChunk->pData          = m_pExtensions;
+        l_pChunk->dwSize         = 1u;
+    }
+
+    l_szTrace += l_pChunk->dwSize;
+    SET_EXT_HEADER_SIZE(m_sHeader_Data.sCommonRaw, l_szTrace);
+    l_pChunk ++;
+
+    l_dwSize += (tUINT32)l_szTrace;//m_sHeader_Data.sCommon.dwSize;
 
     if (ECLIENT_STATUS_OK != m_pClient->Sent(m_dwChannel_ID,
                                              m_pChk_Head,

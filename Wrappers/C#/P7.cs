@@ -85,11 +85,11 @@ namespace P7
         {
             if (8 == IntPtr.Size)
             {
-                P7_Exceptional_Flush32();
+                P7_Exceptional_Flush64();
             }
             else
             {
-                P7_Exceptional_Flush64();
+                P7_Exceptional_Flush32();
             }
         }                              
     }
@@ -682,15 +682,18 @@ namespace P7
         ////////////////////////////////////////////////////////////////////////
         //P7_Trace_Create
         private delegate System.IntPtr fnP7_Trace_Create(System.IntPtr i_hClient,
-                                                         String i_sName
+                                                         String        i_sName,
+                                                         System.IntPtr i_pOpt
                                                         );
         [DllImport(Dll.DLL_NAME_32, EntryPoint = "P7_Trace_Create", CharSet = CharSet.Unicode, CallingConvention = CallingConvention.Cdecl)]
         private static extern System.IntPtr P7_Trace_Create32(System.IntPtr i_hClient,
-                                                              [MarshalAs(UnmanagedType.LPWStr)]String i_sName
+                                                              [MarshalAs(UnmanagedType.LPWStr)]String i_sName,
+                                                              System.IntPtr i_pOpt
                                                              );
         [DllImport(Dll.DLL_NAME_64, EntryPoint = "P7_Trace_Create", CharSet = CharSet.Unicode, CallingConvention = CallingConvention.Cdecl)]
         private static extern System.IntPtr P7_Trace_Create64(System.IntPtr i_hClient,
-                                                              [MarshalAs(UnmanagedType.LPWStr)]String i_sName
+                                                              [MarshalAs(UnmanagedType.LPWStr)]String i_sName,
+                                                              System.IntPtr i_pOpt 
                                                              );
 
         ////////////////////////////////////////////////////////////////////////
@@ -883,7 +886,7 @@ namespace P7
                  || (IntPtr.Zero != i_pClient.Handle)
                )
             {
-                m_hHandle = P7_Trace_Create(i_pClient.Handle, i_sName);
+                m_hHandle = P7_Trace_Create(i_pClient.Handle, i_sName, IntPtr.Zero);
             }
             else
             {

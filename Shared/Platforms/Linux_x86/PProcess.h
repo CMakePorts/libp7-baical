@@ -129,44 +129,59 @@ public:
     //Get_ArgV
     static tXCHAR **Get_ArgV(const tXCHAR *i_pCmdLine, tINT32 *o_pCount)
     {
-        tUINT16       l_wLen    = 0;//strlen(i_pCmdLine);
-        tXCHAR       *l_pBuffer = NULL;//new tXCHAR[l_wLen];
+        tINT32        l_iLen    = 0;//strlen(i_pCmdLine);
+        tXCHAR       *l_pBuffer = NULL;//new tXCHAR[l_iLen];
         tXCHAR      **l_pReturn = NULL;
         tBOOL         l_bNew    = TRUE;
+        tBOOL         l_bStr    = FALSE;
         tINT32        l_iIDX    = 0;
 
         if (    (NULL == i_pCmdLine)
-            || (NULL == o_pCount)    
+             || (NULL == o_pCount)    
         )
         {
             goto l_lblExit;
         }
 
-        l_wLen = strlen(i_pCmdLine) + 1;
-        l_pBuffer = new tXCHAR[l_wLen];
+        l_iLen = (tINT32)strlen(i_pCmdLine) + 1;
+        l_pBuffer = new tXCHAR[l_iLen];
 
         if (NULL == l_pBuffer)
         {
             goto l_lblExit;
         }
 
-        strcpy(l_pBuffer, i_pCmdLine);
-
-        for (tINT32 l_iI = 0; l_iI < l_wLen; l_iI++)
+        for (tINT32 l_iI = 0; l_iI < l_iLen; l_iI++)
         {
-            if (TM(' ') == l_pBuffer[l_iI])
+            if (TM('\"') == i_pCmdLine[l_iI])
             {
-                l_pBuffer[l_iI] = 0;
+                l_bStr = ! l_bStr;
             }
-        }    
+            else
+            {
+                if (    (TM(' ') == i_pCmdLine[l_iI])
+                     && (!l_bStr)
+                   )
+                {
+                    l_pBuffer[l_iIDX++] = 0;
+                }
+                else
+                {
+                    l_pBuffer[l_iIDX++] = i_pCmdLine[l_iI];
+                }
+                
+            }
+        }  
+
+        l_iLen = l_iIDX;
 
         //calculate count of items//////////////////////////////////////////////////
         *o_pCount = 0;
-        for (tINT32 l_iI = 0; l_iI < l_wLen; l_iI++)
+        for (tINT32 l_iI = 0; l_iI < l_iLen; l_iI++)
         {
             if (    (0 == l_pBuffer[l_iI])
-                || ((l_iI + 1) == l_wLen)    
-            )
+                 || ((l_iI + 1) == l_iLen)    
+               )
             {
                 (*o_pCount) ++;
             }
@@ -187,7 +202,8 @@ public:
 
         //fill result///////////////////////////////////////////////////////////////
         l_bNew = TRUE;
-        for (tINT32 l_iI = 0; l_iI < l_wLen; l_iI++)
+        l_iIDX = 0;
+        for (tINT32 l_iI = 0; l_iI < l_iLen; l_iI++)
         {
             if (l_bNew)
             {
@@ -204,7 +220,6 @@ public:
     l_lblExit:
 
         return l_pReturn;
-    //  return = CommandLineToArgvW(i_pCmdLine, o_pCount);
     }//Get_ArgV
 
 

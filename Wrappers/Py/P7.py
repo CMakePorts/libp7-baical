@@ -121,7 +121,7 @@ Telemetry_Release.argtypes = [c_void_p]
 #loading P7_Trace_Create function
 Trace_Create           = g_hDll.P7_Trace_Create
 Trace_Create.restype   = c_void_p
-Trace_Create.argtypes  = [c_void_p, os_charp]
+Trace_Create.argtypes  = [c_void_p, os_charp, c_void_p]
 
 Trace_Register_Module          = g_hDll.P7_Trace_Register_Module
 Trace_Register_Module.restype  = c_void_p
@@ -542,7 +542,7 @@ def Get_Trace_Channel(i_sTraceName, i_sClientName = None):
 
     #creating new telemetry channel instance
     l_cReturn = None;
-    l_hTel    = Trace_Create(l_hClient, i_sTraceName)
+    l_hTel    = Trace_Create(l_hClient, i_sTraceName, 0)
     
     if l_hTel != None:
         Trace_Share(l_hTel, i_sTraceName);

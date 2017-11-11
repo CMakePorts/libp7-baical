@@ -25,7 +25,7 @@ public:
     //Get_ArgV
     static tXCHAR **Get_ArgV(tINT32 *o_pCount)
     {
-        return CommandLineToArgvW(GetCommandLineW(), o_pCount);
+        return Get_ArgV(GetCommandLineW(), o_pCount);
     }//Get_ArgV
 
 
@@ -33,7 +33,98 @@ public:
     //Get_ArgV
     static tXCHAR **Get_ArgV(const tXCHAR *i_pCmdLine, tINT32 *o_pCount)
     {
-        return CommandLineToArgvW(i_pCmdLine, o_pCount);
+        tINT32        l_iLen    = 0;//strlen(i_pCmdLine);
+        tXCHAR       *l_pBuffer = NULL;//new tXCHAR[l_iLen];
+        tXCHAR      **l_pReturn = NULL;
+        tBOOL         l_bNew    = TRUE;
+        tBOOL         l_bStr    = FALSE;
+        tINT32        l_iIDX    = 0;
+
+        if (    (NULL == i_pCmdLine)
+             || (NULL == o_pCount)    
+        )
+        {
+            goto l_lblExit;
+        }
+
+        l_iLen = (tINT32)wcslen(i_pCmdLine) + 1;
+        l_pBuffer = new tXCHAR[l_iLen];
+
+        if (NULL == l_pBuffer)
+        {
+            goto l_lblExit;
+        }
+
+        for (tINT32 l_iI = 0; l_iI < l_iLen; l_iI++)
+        {
+            if (TM('\"') == i_pCmdLine[l_iI])
+            {
+                l_bStr = ! l_bStr;
+            }
+            else
+            {
+                if (    (TM(' ') == i_pCmdLine[l_iI])
+                     && (!l_bStr)
+                   )
+                {
+                    l_pBuffer[l_iIDX++] = 0;
+                }
+                else
+                {
+                    l_pBuffer[l_iIDX++] = i_pCmdLine[l_iI];
+                }
+                
+            }
+        }  
+
+        l_iLen = l_iIDX;
+
+        //calculate count of items//////////////////////////////////////////////////
+        *o_pCount = 0;
+        for (tINT32 l_iI = 0; l_iI < l_iLen; l_iI++)
+        {
+            if (    (0 == l_pBuffer[l_iI])
+                 || ((l_iI + 1) == l_iLen)    
+               )
+            {
+                (*o_pCount) ++;
+            }
+        }
+
+        if (0 >= *o_pCount)
+        {
+            goto l_lblExit;
+        }
+
+        //allocate result///////////////////////////////////////////////////////////
+        l_pReturn = new tXCHAR*[*o_pCount];
+
+        if (NULL == l_pReturn)
+        {
+            goto l_lblExit;
+        }
+
+        //fill result///////////////////////////////////////////////////////////////
+        l_bNew = TRUE;
+        l_iIDX = 0;
+        for (tINT32 l_iI = 0; l_iI < l_iLen; l_iI++)
+        {
+            if (l_bNew)
+            {
+                l_pReturn[l_iIDX++] = &l_pBuffer[l_iI];
+                l_bNew = FALSE;
+            }
+
+            if (0 == l_pBuffer[l_iI])
+            {
+                l_bNew = TRUE;
+            }
+        }
+
+    l_lblExit:
+
+        return l_pReturn;
+    //  return = CommandLineToArgvW(i_pCmdLine, o_pCount);
     }//Get_ArgV
 
 
@@ -41,7 +132,18 @@ public:
     //Free_ArgV
     static void Free_ArgV(tXCHAR **i_pArgV)
     {
-        LocalFree(i_pArgV);
+        if (NULL == i_pArgV)
+        {
+            return;
+        }
+
+        if (i_pArgV[0])
+        {
+            delete [] i_pArgV[0];
+        }
+
+        delete [] i_pArgV; 
+        //LocalFree(i_pArgV);
     }//Free_ArgV
 
 
