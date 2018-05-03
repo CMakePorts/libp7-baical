@@ -122,8 +122,11 @@
 #define CLIENT_COMMAND_LINE_DIR                                TM("/P7.Dir=")
 
 //Value: define rolling type
-// Xmb - rolling every X megabytes, for example /P7.Roll=10mb
-// Xhr - rolling every X hours, for example /P7.Roll=24hr, max = 1000hr
+// Xmb     - rolling every X megabytes, for example /P7.Roll=10mb
+// Xhr     - rolling every X hours, for example /P7.Roll=24hr, max = 1000hr
+// HH:MMtm - rolling by time (00:00 -> 23:59), for example: 
+//   * rolling at 12:00 -> P7.Roll=12:00tm
+//   * rolling at 12:00 and 00:00 -> P7.Roll=00:00,12:00tm
 //default: rolling is off
 #define CLIENT_COMMAND_LINE_FILE_ROLLING                       TM("/P7.Roll=")
 
@@ -203,6 +206,22 @@
 #define CLIENT_COMMAND_LOG_HELP                                TM("/P7.Help")
 
 
+////////////////////////////////////////////////////////////////////////////////
+//                          Trace  settings                                    /
+////////////////////////////////////////////////////////////////////////////////
+
+//Override verbosity for all trace streams and modules
+//Values:
+//0 = EP7TRACE_LEVEL_TRACE
+//1 = EP7TRACE_LEVEL_DEBUG   
+//2 = EP7TRACE_LEVEL_INFO    
+//3 = EP7TRACE_LEVEL_WARNING 
+//4 = EP7TRACE_LEVEL_ERROR   
+//5 = EP7TRACE_LEVEL_CRITICAL
+//Example: /P7.Trc.Verb=5 
+#define CLIENT_COMMAND_TRACE_VERBOSITY                       TM("/P7.Trc.Verb=")
+
+
 #define CLIENT_HELP_STRING\
     TM("P7 arguments:\n")\
     TM(" -General arguments: \n")\
@@ -238,6 +257,15 @@
     TM("                3 : Errors\n")\
     TM("                4 : Critical\n")\
     TM("                Example: /P7.Verb=4\n")\
+    TM("   /P7.Trc.Verb- Set verbosity level for all trace streams and associated modules\n")\
+    TM("                Has next verbosity levels:\n")\
+    TM("                0 : Trace\n")\
+    TM("                1 : Debug\n")\
+    TM("                2 : Info\n")\
+    TM("                3 : Warnings\n")\
+    TM("                4 : Errors\n")\
+    TM("                5 : Critical\n")\
+    TM("                Example: /P7.Trc.Verb=4\n")\
     TM("   /P7.Pool   - Set size of the internal buffers pool in kilobytes. Minimal 16(kb)\n")\
     TM("                maximal is limited by your OS and HW. Default value = 4mb\n")\
     TM("                Example, 1 Mb allocation: /P7.Pool=1024\n")\
@@ -406,6 +434,8 @@ public:
     //Share  - function to share current P7 object in address space of
     //         the current process, see documentation for details
     virtual tBOOL             Share(const tXCHAR *i_pName)                  = 0;
+
+    virtual const tXCHAR     *Get_Argument(const tXCHAR  *i_pName)          = 0;
 };
 
 

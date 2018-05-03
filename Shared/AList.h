@@ -18,8 +18,8 @@
 ////////////////////////////////////////////////////////////////////////////////
 //******************************************************************************
 // This header file contains simple template lists                             *
-// 1. List with customizable memory manager (CAList)                           *
-// 2. List with pooling of internal elements (CBList)                          *
+// 1. List with customizable memory manager (CListBase)                           *
+// 2. List with pooling of internal elements (CListPool)                          *
 //******************************************************************************
 #ifndef ALIST_H
 #define ALIST_H
@@ -27,9 +27,9 @@
 typedef void *pAList_Cell;
 
 ////////////////////////////////////////////////////////////////////////////////
-//CAList
+//CListBase
 template <typename tData_Type>
-class CAList
+class CListBase
 {
 protected:
     struct tCell
@@ -55,8 +55,8 @@ protected:
 
 public:
     ////////////////////////////////////////////////////////////////////////////
-    //CAList::CAList
-    CAList()
+    //CListBase::CListBase
+    CListBase()
     {
         m_bInitialized     = TRUE;
         m_pFirst           = NULL;
@@ -71,12 +71,12 @@ public:
         //{
         //    m_bInitialized = FALSE;
         //}
-    }//CAList::AList
+    }//CListBase::AList
 
     
     ////////////////////////////////////////////////////////////////////////////
-    //CAList::~CAList
-    virtual ~CAList()
+    //CListBase::~CListBase
+    virtual ~CListBase()
     {
         Index_Release();
 
@@ -94,18 +94,18 @@ public:
     #endif
 #endif
         }
-    }//CAList::~CAList
+    }//CListBase::~CListBase
     
    
     ////////////////////////////////////////////////////////////////////////////
-    //CAList::Get_Initialized
+    //CListBase::Get_Initialized
     tBOOL Get_Initialized()
     {
         return m_bInitialized;
-    }//CAList::Get_Initialized
+    }//CListBase::Get_Initialized
 
     ////////////////////////////////////////////////////////////////////////////
-    //CAList::Del
+    //CListBase::Del
     tBOOL Del(pAList_Cell i_pCell, tBOOL i_bFree_Data)
     {
         tCell  *l_pCell   = static_cast<tCell*>(i_pCell);
@@ -117,11 +117,11 @@ public:
         }
 
         return l_bResult;
-    }//CAList::Del
+    }//CListBase::Del
 
 
     ////////////////////////////////////////////////////////////////////////////
-    //CAList::Extract
+    //CListBase::Extract
     tBOOL Extract(pAList_Cell i_pCell)
     {
         tCell *l_pCell   = static_cast<tCell*>(i_pCell);
@@ -135,11 +135,11 @@ public:
         }
 
         return l_bResult;
-    }//CAList::Extract
+    }//CListBase::Extract
 
 
     ////////////////////////////////////////////////////////////////////////////
-    //CAList::Add_After
+    //CListBase::Add_After
     pAList_Cell Add_After(pAList_Cell i_pCell, tData_Type i_pData)
     {
         tCell * l_pNew_Cell = NULL;
@@ -158,11 +158,11 @@ public:
         }
 
         return static_cast<pAList_Cell>(l_pNew_Cell);
-    }//CAList::Add_After
+    }//CListBase::Add_After
 
 
     ////////////////////////////////////////////////////////////////////////////
-    //CAList::Put_After
+    //CListBase::Put_After
     tBOOL Put_After(pAList_Cell i_pList_Cell, pAList_Cell i_pExt_Cell)
     {
         tCell   *l_pList_Cell = static_cast<tCell*>(i_pList_Cell);
@@ -209,11 +209,11 @@ public:
         m_bBrokenIndex = TRUE;
      
         return l_bResult;
-    }//CAList::Put_After
+    }//CListBase::Put_After
 
 
     ////////////////////////////////////////////////////////////////////////////
-    //CAList::Get_Prev
+    //CListBase::Get_Prev
     pAList_Cell Get_Prev(pAList_Cell i_pCell)
     {
         tCell *l_pCell = static_cast<tCell*>(i_pCell);
@@ -229,11 +229,11 @@ public:
         }
 
         return l_pResult;
-    }//CAList::Get_Prev
+    }//CListBase::Get_Prev
 
 
     ////////////////////////////////////////////////////////////////////////////
-    //CAList::Get_Next
+    //CListBase::Get_Next
     pAList_Cell Get_Next(pAList_Cell i_pCell)
     {
         tCell *l_pCell = static_cast<tCell *>(i_pCell);
@@ -249,25 +249,25 @@ public:
         }
 
         return l_pResult;
-    }//CAList::Get_Next
+    }//CListBase::Get_Next
 
     ////////////////////////////////////////////////////////////////////////////
-    //CAList::Get_Data
+    //CListBase::Get_Data
     tData_Type Get_Data(pAList_Cell i_pCell)
     {
         tCell *l_pCell = static_cast<tCell*>(i_pCell);
-        tData_Type   l_pResult = NULL;
+        tData_Type   l_pResult = 0;
         if (l_pCell)
         {
             l_pResult = l_pCell->m_pData;
         }
 
         return l_pResult;
-    }//CAList::Get_Data
+    }//CListBase::Get_Data
 
     
     ////////////////////////////////////////////////////////////////////////////
-    //CAList::Set_Data
+    //CListBase::Set_Data
     tBOOL Set_Data(pAList_Cell i_pCell, tBOOL i_bFree_Old_Data, tData_Type i_pData)
     {
         tCell      *l_pCell   = static_cast<tCell*>(i_pCell);
@@ -283,11 +283,11 @@ public:
         }
 
         return TRUE;
-    }//CAList::Set_Data
+    }//CListBase::Set_Data
 
 
     ////////////////////////////////////////////////////////////////////////////
-    //CAList::Get_ByIndex
+    //CListBase::Get_ByIndex
     pAList_Cell Get_ByIndex(tUINT32 i_dwIDX)
     {
         tCell *l_pReturn   = NULL;
@@ -324,21 +324,21 @@ public:
         }
 
         return l_pReturn;
-    }//CAList::Get_ByIndex
+    }//CListBase::Get_ByIndex
 
 
     ////////////////////////////////////////////////////////////////////////////
-    //CAList::operator[]
+    //CListBase::operator[]
     tData_Type operator[](tUINT32 i_dwIDX)
     {
         tCell *l_pReturn = static_cast<tCell*>(Get_ByIndex(i_dwIDX));
 
         return (l_pReturn) ? l_pReturn->m_pData : NULL;
-    }//CAList::operator[]
+    }//CListBase::operator[]
 
 
     ////////////////////////////////////////////////////////////////////////////
-    //CAList::Put_Data
+    //CListBase::Put_Data
     tBOOL Put_Data(pAList_Cell i_pCell, tData_Type i_pData, tBOOL i_bFree_Old_Data)
     { 
         tBOOL  l_bResult = TRUE;
@@ -360,27 +360,27 @@ public:
 
 
         return l_bResult;
-    }//CAList::Put_Data
+    }//CListBase::Put_Data
 
     
     ////////////////////////////////////////////////////////////////////////////
-    //CAList::Lock
+    //CListBase::Lock
     //void Lock()
     //{
     //    WaitForSingleObject(m_hLock_Mutex,  INFINITE);        
-    //}//CAList::Lock
+    //}//CListBase::Lock
 
 
     ////////////////////////////////////////////////////////////////////////////
-    //CAList::UnLock
+    //CListBase::UnLock
     //void UnLock()
     //{
     //    ReleaseMutex(m_hLock_Mutex);
-    //}//CAList::UnLock
+    //}//CListBase::UnLock
 
 
     ////////////////////////////////////////////////////////////////////////////
-    //CAList::Clear
+    //CListBase::Clear
     void Clear(tBOOL i_bClearData)
     {
         while (NULL != m_pFirst)
@@ -390,35 +390,35 @@ public:
                 break;
             }
         }
-    }//CAList::Clear
+    }//CListBase::Clear
 
 
     ////////////////////////////////////////////////////////////////////////////
-    //CAList::Get_First
+    //CListBase::Get_First
     pAList_Cell Get_First()
     {
         return static_cast<pAList_Cell>(m_pFirst);
-    }//CAList::Get_First
+    }//CListBase::Get_First
 
 
     ////////////////////////////////////////////////////////////////////////////
-    //CAList::Get_Last
+    //CListBase::Get_Last
     pAList_Cell Get_Last()
     {
         return static_cast<pAList_Cell>(m_pLast);
-    }//CAList::Get_Last
+    }//CListBase::Get_Last
 
 
     ////////////////////////////////////////////////////////////////////////////
-    //CAList::Count
+    //CListBase::Count
     tUINT32 Count()
     {
         return m_dwCount;
-    }//CAList::Count
+    }//CListBase::Count
 
 private:
     ////////////////////////////////////////////////////////////////////////////
-    //CAList::Cell_Release
+    //CListBase::Cell_Release
     tBOOL Cell_Release(tCell *i_pCell, tBOOL i_bFree_Cell, tBOOL i_bFree_Data)
     {
         tBOOL l_bResult = TRUE;
@@ -466,7 +466,7 @@ private:
             if (i_bFree_Data)
             {
                 Data_Release(i_pCell->m_pData);
-                i_pCell->m_pData = NULL;
+                i_pCell->m_pData = 0;
             }
 
             if (i_bFree_Cell)
@@ -481,11 +481,11 @@ private:
         m_dwCount--;
 
         return l_bResult;
-    }//CAList::Cell_Release
+    }//CListBase::Cell_Release
 
 
     ////////////////////////////////////////////////////////////////////////////
-    //CAList::Index_Build
+    //CListBase::Index_Build
     tBOOL Index_Build()
     {
         tBOOL l_bResult = TRUE;
@@ -525,11 +525,11 @@ private:
         }
 
         return l_bResult;
-    }//CAList::Index_Build
+    }//CListBase::Index_Build
 
 
     ////////////////////////////////////////////////////////////////////////////
-    //CAList::Index_Release
+    //CListBase::Index_Release
     tBOOL Index_Release()
     {
         if (m_pIndex)
@@ -541,12 +541,61 @@ private:
         m_dwIndexCount = 0;
         m_bBrokenIndex = TRUE;
         return TRUE;
-    }//CAList::Index_Release
+    }//CListBase::Index_Release
 
 protected:
     ////////////////////////////////////////////////////////////////////////////
-    //CAList::Data_Release
+    //CListBase::Data_Release
     // override this function in derived class to implement specific data 
+    // destructor(structures as example)
+    virtual tBOOL Data_Release(tData_Type i_pData) = 0;
+    
+    ////////////////////////////////////////////////////////////////////////////
+    //CListBase::MemAlloc
+    //override this function in derived class to implement own memory allocation
+    //mechanism, it will be used everywhere in this class
+    virtual void *MemAlloc(size_t i_szSize)
+    {
+        return new tUINT8[i_szSize];
+    }//CListBase::MemAlloc
+
+    
+    ////////////////////////////////////////////////////////////////////////////
+    //CListBase::MemFree
+    //override this function in derived class to implement own memory deallocation
+    //mechanism, it will be used everywhere in this class
+    virtual void MemFree(void * i_pMemory)
+    {
+        delete [] ((tUINT8*)i_pMemory);
+    }//CListBase::MemFree
+
+    
+    ////////////////////////////////////////////////////////////////////////////
+    //CListBase::Cell_Allocate
+    virtual tCell *Cell_Allocate()
+    {
+        return (tCell*)this->MemAlloc(sizeof(tCell));
+    }//Cell_Allocate
+
+    
+    ////////////////////////////////////////////////////////////////////////////
+    //CListBase::Cell_Free
+    virtual void Cell_Free(tCell *i_pCell)
+    {
+        this->MemFree(i_pCell);
+    }//Cell_Free
+};
+
+////////////////////////////////////////////////////////////////////////////////
+//CAList
+template <typename tData_Type>
+class CAList
+        : public CListBase<tData_Type>
+{
+protected:
+    ////////////////////////////////////////////////////////////////////////////
+    //CListBase::Data_Release
+    // override this function in derived class to implement specific data
     // destructor(structures as example)
     virtual tBOOL Data_Release(tData_Type i_pData)
     {
@@ -557,43 +606,7 @@ protected:
 
         delete i_pData;
         return TRUE;
-    }//CAList::Data_Release
-
-    
-    ////////////////////////////////////////////////////////////////////////////
-    //CAList::MemAlloc
-    //override this function in derived class to implement own memory allocation
-    //mechanism, it will be used everywhere in this class
-    virtual void *MemAlloc(size_t i_szSize)
-    {
-        return new tUINT8[i_szSize];
-    }//CAList::MemAlloc
-
-    
-    ////////////////////////////////////////////////////////////////////////////
-    //CAList::MemFree
-    //override this function in derived class to implement own memory deallocation
-    //mechanism, it will be used everywhere in this class
-    virtual void MemFree(void * i_pMemory)
-    {
-        delete [] ((tUINT8*)i_pMemory);
-    }//CAList::MemFree
-
-    
-    ////////////////////////////////////////////////////////////////////////////
-    //CAList::Cell_Allocate
-    virtual tCell *Cell_Allocate()
-    {
-        return (tCell*)this->MemAlloc(sizeof(tCell));
-    }//Cell_Allocate
-
-    
-    ////////////////////////////////////////////////////////////////////////////
-    //CAList::Cell_Free
-    virtual void Cell_Free(tCell *i_pCell)
-    {
-        this->MemFree(i_pCell);
-    }//Cell_Free
+    }//CListBase::Data_Release
 };
 
 
@@ -608,12 +621,11 @@ protected:
 //N.B.: be careful with list, use it only when you absolutely sure in what are 
 //      you doing.
 template <typename tData_Type>
-class CBList:
-    public CAList<tData_Type>
+class CListPool:
+    public CListBase<tData_Type>
 {
 private:
-  
-#define TCELL typename CAList<tData_Type>::tCell
+    #define TCELL typename CListBase<tData_Type>::tCell
     
     struct tPool_Segment
     {
@@ -629,19 +641,19 @@ private:
     tUINT32         m_dwPool_Size; 
 public:
     ////////////////////////////////////////////////////////////////////////////
-    //CBList::CBList
-    CBList(tUINT32 i_dwPool_Size = 128)
-       : CAList<tData_Type>()
+    //CListPool::CListPool
+    CListPool(tUINT32 i_dwPool_Size = 128)
+       : CListBase<tData_Type>()
        , m_dwPool_Size(i_dwPool_Size)
     {
         m_pPool_First      = NULL;
         m_pPool_Cell_First = NULL;
-    }//CBList::CBList
+    }//CListPool::CListPool
 
 
     ////////////////////////////////////////////////////////////////////////////
-    //CBList::~CBList
-    virtual ~CBList()
+    //CListPool::~CListPool
+    virtual ~CListPool()
     {
         tPool_Segment *l_pPool_Tmp = NULL;
         while (m_pPool_First)
@@ -651,16 +663,16 @@ public:
 
             Free_Pool_Segment(l_pPool_Tmp);
         }
-    }//CBList::~CBList
+    }//CListPool::~CListPool
 
 private:
     ////////////////////////////////////////////////////////////////////////////
-    //CBList::Create_Pool_Segment
+    //CListPool::Create_Pool_Segment
     tBOOL Create_Pool_Segment()
     {
         tBOOL l_bReturn = FALSE;
 
-        tPool_Segment *l_pPool = (tPool_Segment*)CAList<tData_Type>::MemAlloc(sizeof(tPool_Segment));
+        tPool_Segment *l_pPool = (tPool_Segment*)CListBase<tData_Type>::MemAlloc(sizeof(tPool_Segment));
         
         if (l_pPool)
         {
@@ -699,11 +711,11 @@ private:
         }
 
         return l_bReturn;
-    }//CBList::Create_Pool_Segment
+    }//CListPool::Create_Pool_Segment
 
 
     ////////////////////////////////////////////////////////////////////////////
-    //CBList::Free_Pool_Segment
+    //CListPool::Free_Pool_Segment
     void Free_Pool_Segment(tPool_Segment *io_pPool)
     {
         if (io_pPool)
@@ -715,11 +727,11 @@ private:
             }
             this->MemFree(io_pPool);
         }
-    }//CBList::Free_Pool_Segment
+    }//CListPool::Free_Pool_Segment
 
 protected:
     ////////////////////////////////////////////////////////////////////////////
-    //CBList::Cell_Allocate
+    //CListPool::Cell_Allocate
     virtual TCELL *Cell_Allocate()
     {
         TCELL *l_pReturn = NULL;
@@ -736,17 +748,49 @@ protected:
         }
 
         return l_pReturn;
-    }//CBList::Cell_Allocate
+    }//CListPool::Cell_Allocate
 
     
     ////////////////////////////////////////////////////////////////////////////
-    //CBList::Cell_Free
+    //CListPool::Cell_Free
     virtual void Cell_Free(TCELL *i_pCell)
     {
         memset(i_pCell, 0, sizeof(TCELL));
         i_pCell->m_pNext   = m_pPool_Cell_First;
         m_pPool_Cell_First = i_pCell;
-    }//CBList::Cell_Free
+    }//CListPool::Cell_Free
+};
+
+
+////////////////////////////////////////////////////////////////////////////////
+//CBList
+template <typename tData_Type>
+class CBList
+        : public CListPool<tData_Type>
+{
+public:
+    ////////////////////////////////////////////////////////////////////////////
+    //CListPool::CListPool
+    CBList(tUINT32 i_dwPool_Size = 128)
+       : CListPool<tData_Type>(i_dwPool_Size)
+    {
+    }//CBList::CBList
+
+protected:
+    ////////////////////////////////////////////////////////////////////////////
+    //CListBase::Data_Release
+    // override this function in derived class to implement specific data
+    // destructor(structures as example)
+    virtual tBOOL Data_Release(tData_Type i_pData)
+    {
+        if (NULL == i_pData)
+        {
+            return FALSE;
+        }
+
+        delete i_pData;
+        return TRUE;
+    }//CListBase::Data_Release
 };
 
 #endif //ALIST_H

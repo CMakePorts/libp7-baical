@@ -24,13 +24,14 @@
 #include <unistd.h>
 #include <dirent.h>
 #include <fnmatch.h>
+#include <pwd.h>
 
 class CFSYS
 {
 public:
     ////////////////////////////////////////////////////////////////////////////
     //Directory_Exists
-    static tBOOL Directory_Exists(tACHAR *i_pPath)
+    static tBOOL Directory_Exists(const tACHAR *i_pPath)
     {
         struct stat l_sStat;
         l_sStat.st_mode = 0;
@@ -93,8 +94,20 @@ public:
 
 
     ////////////////////////////////////////////////////////////////////////////
+    //Directory_Delete
+    static tBOOL Directory_Delete(const tACHAR *i_pDir)
+    {
+        if (NULL == i_pDir)
+        {
+            return FALSE;
+        }
+
+        return (0 == rmdir(i_pDir));
+    }//Directory_Delete
+
+    ////////////////////////////////////////////////////////////////////////////
     //File_Exists
-    static tBOOL File_Exists(tACHAR * i_pFileName)
+    static tBOOL File_Exists(const tACHAR * i_pFileName)
     {
         struct stat l_sStat;
         l_sStat.st_mode = 0;
@@ -168,43 +181,58 @@ public:
 
     }// Enumerate_Files
 
+	
+    ////////////////////////////////////////////////////////////////////////////
+    // Enumerate_Dirs
+    static void Enumerate_Dirs(CBList<CWString*> *io_pList, const tXCHAR *i_pRoot)
+    {
+        if (NULL == io_pList)
+        {
+            return;
+        }
 
-//    ////////////////////////////////////////////////////////////////////////////
-//    //Get_Version
-//    static UINT64 Get_Version(wchar_t *i_pFile)
-//    {
-//        DWORD  l_dwUnknown      = 0;
-//        DWORD  l_dwFileInfoSize = GetFileVersionInfoSizeW(i_pFile, &l_dwUnknown);
-//        UINT64 l_qwReturn       = 0;
+		if (!i_pRoot)
+		{
+		    i_pRoot = "/";
+		}
+		
+        DIR    *l_pDir       = opendir(i_pRoot);
+        dirent *l_pDir_Entry = 0;
 
-//        if (l_dwFileInfoSize)
-//        {
-//            BYTE * l_pFileInfo = new BYTE[l_dwFileInfoSize];
-//            if (l_pFileInfo)
-//            {
-//                memset(l_pFileInfo, 0, l_dwFileInfoSize);
+        if (!l_pDir)
+        {
+            return;
+        }
 
-//                if (GetFileVersionInfoW(i_pFile, 0, l_dwFileInfoSize, l_pFileInfo) )
-//                {
-//                    VS_FIXEDFILEINFO * l_tVersion = NULL;
-//                    UINT l_dwSize = 0;
-//                    if (VerQueryValueW(l_pFileInfo, L"\\", (LPVOID *)&l_tVersion, &l_dwSize))
-//                    {
-//                        l_qwReturn = (((UINT64)l_tVersion->dwProductVersionMS) << 32) +
-//                                    l_tVersion->dwProductVersionLS;
-//                    }
-//                }
+        while ((l_pDir_Entry = readdir(l_pDir)) != 0)
+        {
+            if (    (DT_DIR == l_pDir_Entry->d_type)
+                 && (0 != PStrCmp(l_pDir_Entry->d_name, "."))
+                 && (0 != PStrCmp(l_pDir_Entry->d_name, ".."))
+               )
+            {
+                CWString *i_pFile = new CWString();
+                if (i_pFile)
+                {
+                    i_pFile->Set(i_pRoot);
+                    i_pFile->Append(2, "/", l_pDir_Entry->d_name);
+                    io_pList->Add_After(io_pList->Get_Last(), i_pFile);
+                }
+            }
+        }
 
-//                if (l_pFileInfo)
-//                {
-//                    delete [ ] l_pFileInfo;
-//                    l_pFileInfo = NULL;
-//                }
-//            } //if (l_pFileInfo)
-//        } //if (l_dwFileInfoSize)
+        closedir(l_pDir);
+        l_pDir = 0;
+    }// Enumerate_Dirs
+	
 
-//        return l_qwReturn;
-//    }//Get_Version
+    ////////////////////////////////////////////////////////////////////////////
+    //Get_Version
+    static tUINT64 Get_Version(const char *i_pFile)
+    {
+        UNUSED_ARG(i_pFile);
+        return 0ull;
+    }//Get_Version
 
 
 //    ////////////////////////////////////////////////////////////////////////////
@@ -251,6 +279,70 @@ public:
 
         return (0 == remove(i_pFile_Name));
     }//Delete_File
+
+    ////////////////////////////////////////////////////////////////////////////
+    //GetUserDirectory
+    static tBOOL GetUserDirectory(CWString *o_pPath)
+    {
+        if (    (NULL == o_pPath)
+             || (FALSE == o_pPath->Realloc(4096))
+           )
+        {
+            return TRUE;
+        }
+
+        struct passwd *pw = getpwuid(getuid());
+
+        if (!pw)
+        {
+            return FALSE;
+        }
+
+        o_pPath->Set(pw->pw_dir);
+        return TRUE;
+    }
+	
+	
+    ////////////////////////////////////////////////////////////////////////////
+    //GetUserDirectory
+    static tBOOL GetDirectoryParent(CWString &i_rChild, CWString &o_rParent)
+    {
+        o_rParent.Set(i_rChild.Get());
+        size_t  l_szDir = o_rParent.Length();
+        tXCHAR *l_pDir  = o_rParent.Get();
+
+        //cut trailing '/' or '\'
+        while (    (l_szDir > 1)
+                && (TM('/') == l_pDir[l_szDir - 1])
+              )
+        {
+            l_pDir[--l_szDir] = 0;
+        }
+
+        tXCHAR *l_pTemp = strrchr(l_pDir, TM('/'));
+
+        if (!l_pTemp)
+        {
+            o_rParent.Set(TM(""));
+            return TRUE;
+        }
+
+        l_pTemp++;
+        *l_pTemp = 0;
+        l_pTemp--;
+
+        //removing duplicates of '/'
+        while (    (TM('/') == *l_pTemp)
+                && (l_pTemp > l_pDir)
+               )
+        {
+            *l_pTemp = 0;
+            l_pTemp--;
+        }
+
+        return (*l_pDir) ? TRUE : FALSE;
+    }
+	
 };
 
 

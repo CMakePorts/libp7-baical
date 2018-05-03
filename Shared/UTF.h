@@ -26,9 +26,9 @@
 
 ////////////////////////////////////////////////////////////////////////////////
 //Get_utf8_Length
-static UNUSED_FUNC tINT32 Get_UTF8_Length(const char *i_pText)
+static UNUSED_FUNC size_t Get_UTF8_Length(const char *i_pText)
 {
-    tINT32        l_dwLength = 0;
+    size_t        l_dwLength = 0;
     unsigned char l_bCh      = 0;
 
     if (NULL == i_pText)
@@ -69,6 +69,40 @@ static UNUSED_FUNC tINT32 Get_UTF8_Length(const char *i_pText)
 
     return l_dwLength;
 }//Get_utf8_Length
+
+
+////////////////////////////////////////////////////////////////////////////////
+//Get_UTF16_Length
+static UNUSED_FUNC size_t Get_UTF16_Length(const tWCHAR *i_pText)
+{
+    size_t  l_dwLength = 0;
+    tWCHAR  l_wCh      = 0;
+
+    if (NULL == i_pText)
+    {
+        return 0;
+    }
+
+    while ( 0 != (*i_pText))
+    {
+        l_wCh = *i_pText;
+
+        if (    (l_wCh >= 0xD800ul) //processing surrogate pairs
+             && (l_wCh <= 0xDFFFul)
+           )
+        {
+            i_pText += 2;
+        }
+        else
+        {
+            i_pText += 1;
+        }
+
+        l_dwLength ++;
+    }
+
+    return l_dwLength;
+}//Get_UTF16_Length
 
 
 ////////////////////////////////////////////////////////////////////////////////

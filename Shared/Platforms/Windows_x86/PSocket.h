@@ -21,6 +21,8 @@
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <mswsock.h>
+#include "GTypes.h"
+#include "AList.h"
 
 //256k
 #define CLIENT_RECV_BUFFER_SIZE                                        (0x40000) 
@@ -113,6 +115,86 @@ static tBOOL Print_SAddr(sockaddr *i_pAddress, XCHAR *o_pIP, tUINT32 i_dwLen)
     
     return l_bReturn;
 }//Print_SAddr
+
+
+////////////////////////////////////////////////////////////////////////////////
+//PEnumIpsHlp
+static tBOOL PEnumIpsHlp(const char *i_pHost, CBList<sockaddr_storage*> *io_pList)
+{
+    char       l_pPort[16]= TOSTR(9009);
+    addrinfo  *l_pInfo    = NULL;
+    addrinfo  *l_pNext    = NULL;
+    addrinfo   l_tHint    = {0};
+
+    l_tHint.ai_family     = AF_UNSPEC;
+    l_tHint.ai_socktype   = SOCK_DGRAM;
+    l_tHint.ai_protocol   = IPPROTO_UDP;
+
+    //http://msdn.microsoft.com/en-us/library/windows/desktop/ms738520(v=vs.85).aspx
+    if (0 == getaddrinfo(i_pHost, l_pPort, &l_tHint, &l_pInfo))
+    {
+        for(l_pNext = l_pInfo; l_pNext != NULL; l_pNext = l_pNext->ai_next)
+        {
+            if (    (    (AF_INET  == l_pNext->ai_family)
+                      || (AF_INET6 == l_pNext->ai_family)
+                    )
+                 && (SOCK_DGRAM  == l_pNext->ai_socktype)
+                 && (IPPROTO_UDP == l_pNext->ai_protocol)
+               )
+            {
+                sockaddr_storage *l_pNew = new sockaddr_storage;
+                if (AF_INET == l_pNext->ai_family)
+                {
+                    memcpy(l_pNew, l_pNext->ai_addr, sizeof(sockaddr_in));
+                }
+                else if (AF_INET6 == l_pNext->ai_family)
+                {
+                    memcpy(l_pNew, l_pNext->ai_addr, sizeof(sockaddr_in6));
+                }
+                else
+                {
+                    memset(l_pNew, 0, sizeof(sockaddr_storage));
+                }
+
+                io_pList->Add_After(NULL, l_pNew);
+            }
+        }
+
+        freeaddrinfo(l_pInfo);
+    }
+    else
+    {
+        return FALSE;
+    }
+
+    return TRUE;
+}//PEnumIpsHlp
+
+
+////////////////////////////////////////////////////////////////////////////////
+//PEnumIps
+static tBOOL PEnumIps(CBList<sockaddr_storage*> *io_pList)
+{
+    if (!io_pList)
+    {
+        return FALSE;
+    }
+
+    io_pList->Clear(TRUE);
+
+    const size_t l_szHost = 256;
+    char l_pHost[l_szHost];
+
+    if (0 == gethostname(l_pHost, l_szHost))
+    {
+        PEnumIpsHlp(l_pHost, io_pList);
+    }
+
+    PEnumIpsHlp("127.0.0.1", io_pList);
+    PEnumIpsHlp("::1", io_pList);
+
+    return TRUE;
+}//PEnumIps
 
 
 ////////////////////////////////////////////////////////////////////////////////

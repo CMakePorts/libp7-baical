@@ -16,50 +16,48 @@
 // License along with this library.                                            /
 //                                                                             /
 ////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-// This header file provide printing to console                                /
-////////////////////////////////////////////////////////////////////////////////
+#ifndef ISHARED_LIB_H
+#define ISHARED_LIB_H
 
-#ifndef CLTEXTCONSOLE_H
-#define CLTEXTCONSOLE_H
-
-////////////////////////////////////////////////////////////////////////////////
-class CClTextConsole
-    : public CClTextSink
+class CSharedLib
 {
+protected:
+    tINT32 volatile m_lReference;
+    CWString        m_cPath;
+    tBOOL           m_bState;
+
 public:
-    CClTextConsole()
+    CSharedLib(const tXCHAR *i_pPath)
+        : m_lReference(1)
+        , m_cPath(i_pPath)
+        , m_bState(FALSE)
     {
-
-    }
-    virtual ~CClTextConsole()
-    {
-
     }
 
-    virtual eClient_Status Initialize(tXCHAR **i_pArgs, tINT32 i_iCount)
+    virtual void  *GetFunction(const tACHAR *i_pName) = 0;
+
+    tBOOL GetState() 
     {
-        UNUSED_ARG(i_pArgs);
-        UNUSED_ARG(i_iCount);
-        return ECLIENT_STATUS_OK;
+        return m_bState;
     }
 
-    virtual eClient_Status Log(const CClTextSink::sLog &i_rRawLog, 
-                               const tXCHAR            *i_pFmtLog, 
-                               size_t                   i_szFmtLog
-                              )
+    tINT32 Add_Ref()
     {
-        UNUSED_ARG(i_rRawLog);
-        UNUSED_ARG(i_szFmtLog);
-    #ifdef UTF8_ENCODING
-        printf("%s", i_pFmtLog);
-    #else
-        wprintf(L"%s", i_pFmtLog);
-    #endif                             
-        printf("\n");
-        return ECLIENT_STATUS_OK;
+        return ATOMIC_INC(&m_lReference);
     }
+
+    tINT32 Release()
+    {
+        tINT32 l_lResult = ATOMIC_DEC(&m_lReference);
+        if ( 0 >= l_lResult )
+        {
+            delete this;
+        }
+
+        return l_lResult;
+    }
+
+    virtual ~CSharedLib() {}
 };
 
-
-#endif //CLTEXTCONSOLE_H
+#endif //ISHARED_LIB_H

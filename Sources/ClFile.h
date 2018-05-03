@@ -27,6 +27,7 @@
 #include "PFile.h"
 
 
+////////////////////////////////////////////////////////////////////////////////
 class CClFile:
     public CClient
 {
@@ -57,7 +58,8 @@ protected:
     {
         EROLLING_NONE,
         EROLLING_MEGABYTES,
-        EROLLING_HOURS
+        EROLLING_HOURS,
+        EROLLING_TIME
     };
 
 private:
@@ -83,6 +85,7 @@ private:
     tUINT64            m_qwFile_Size;
     tUINT32            m_dwFiles_Max_Count;
     CBList<CWString*>  m_cFiles;
+    CUintList          m_cSecondsList;
 
 public:
     CClFile(tXCHAR **i_pArgs,
@@ -104,10 +107,12 @@ private:
                             );
 
     eClient_Status Init_Thread(tXCHAR **i_pArgs,
-                                tINT32   i_iCount
-                               );
+                               tINT32   i_iCount
+                              );
 
     eClient_Status Create_File();
+
+    tBOOL          Parse_Rolling_Time(const tXCHAR *i_pTime);
 
 public:
     eClient_Status Sent(tUINT32            i_dwChannel_ID,

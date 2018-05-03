@@ -115,6 +115,18 @@ static inline void GetLocalTime(tUINT64  i_qwTime,
 
 
 ////////////////////////////////////////////////////////////////////////////////
+//GetSecondOfDay
+static inline tUINT32 GetSecondOfDay()
+{
+    SYSTEMTIME l_sTime = {0};
+
+    GetLocalTime(&l_sTime);
+
+    return 3600 * (tUINT32)l_sTime.wHour + (tUINT32)l_sTime.wMinute * 60 + (tUINT32)l_sTime.wSecond;
+}//GetSecondOfDay
+
+
+////////////////////////////////////////////////////////////////////////////////
 //GetEpochTime
 //return a 64-bit value of 100-nanosecond intervals since January 1, 1601 (UTC).
 static inline tUINT64 GetEpochTime()

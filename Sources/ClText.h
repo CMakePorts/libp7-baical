@@ -148,8 +148,6 @@ protected:
     CFormatter::sBuffer  *m_pBuffer;
     tBOOL                 m_bBig_Endian;
 
-
-
     //Time conversion for Linux
     //http://stackoverflow.com/questions/2408976/struct-timeval-to-printable-format
 public:
@@ -223,7 +221,6 @@ private:
     tUINT32            m_dwBuffers_Count;
 
     tBOOL              m_bBig_Endian;
-
 
     tUINT8            *m_pChunk;
     size_t             m_szChunkMax;

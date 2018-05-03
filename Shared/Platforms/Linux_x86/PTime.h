@@ -20,6 +20,7 @@
 #define PTIME_H
 
 #include <sys/time.h>
+#include <time.h>
 
 //time offset from January 1, 1601 to January 1, 1970, resolution 100ns
 #define TIME_OFFSET_1601_1970                            (116444736000000000ULL)
@@ -104,7 +105,7 @@ static __attribute__ ((unused)) void GetLocalTime(tUINT64  i_qwTime,
     if (l_pTime)
     {
         o_rYear         = 1900 + l_pTime->tm_year;
-        o_rMonth        = l_pTime->tm_mon;
+        o_rMonth        = 1 + l_pTime->tm_mon;
         o_rDay          = l_pTime->tm_mday;
         o_rHour         = l_pTime->tm_hour;
         o_rMinutes      = l_pTime->tm_min;
@@ -126,6 +127,24 @@ static __attribute__ ((unused)) void GetLocalTime(tUINT64  i_qwTime,
         o_rNanoseconds  = l_dwNano;
     }
 }//GetLocalTime
+
+
+
+////////////////////////////////////////////////////////////////////////////////
+//GetSecondOfDay
+static inline tUINT32 GetSecondOfDay()
+{
+    time_t l_llRawtime;
+    time(&l_llRawtime);
+    tm *l_pTime = localtime(&l_llRawtime);
+
+    if (l_pTime)
+    {
+        return 3600 * (tUINT32)l_pTime->tm_hour + (tUINT32)l_pTime->tm_min * 60 + l_pTime->tm_sec;
+    }
+
+    return 0;
+}//GetSecondOfDay
 
 
 ////////////////////////////////////////////////////////////////////////////////

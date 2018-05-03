@@ -36,6 +36,7 @@ public:
     };
 
 public:
+    virtual tBOOL   IsOpened()                                              = 0;
     virtual tBOOL   Open(const tXCHAR *i_pName, tUINT32 i_dwFlags)          = 0;
     virtual tBOOL   Close(tBOOL i_bFlush)                                   = 0;
     virtual tBOOL   Set_Position(tUINT64 i_qwOffset)                        = 0;

@@ -81,6 +81,8 @@ class CClBaical:
     tBOOL                m_bChnl_Thread;
     CThShell::tTHREAD    m_hChnl_Thread;
 
+    tBOOL                m_bLocalHost;
+
 public:
     CClBaical(tXCHAR **i_pArgs,
               tINT32   i_iCount

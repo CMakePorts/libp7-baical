@@ -13,12 +13,13 @@
 #include "PThreadShell.h"
 #include "Ticks.h"
 #include "UTF.h"
+#include "AList.h"
+#include "PString.h"
 #include "PProcess.h"
 #include "PConsole.h"
 
 #include "P7_Client.h"
 #include "P7_Trace.h"
-
 
 
 tBOOL Print2Buffer(char       *o_pBuffer, 

@@ -16,10 +16,8 @@
 // License along with this library.                                            /
 //                                                                             /
 ////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-// This header file wrap windows UDP socket utilization into class             /
-////////////////////////////////////////////////////////////////////////////////
-#pragma once
+#ifndef P7_SOCKET_H
+#define P7_SOCKET_H
 
 #include "PSocket.h"
 
@@ -525,10 +523,10 @@ public:
         }
 
         tINT32 l_lRecvRes = recv(m_hSocket, 
-                              i_pBuffer, 
-                              i_dwSize, 
-                              MSG_PEEK 
-                             );
+                                 i_pBuffer, 
+                                 i_dwSize, 
+                                 MSG_PEEK 
+                                );
 
         if (SOCKET_ERROR == l_lRecvRes)
         {
@@ -695,4 +693,4 @@ public:
 };//CUDP_Socket
 
 
-
+#endif //P7_SOCKET_H

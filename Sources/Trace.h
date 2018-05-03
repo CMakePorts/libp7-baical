@@ -307,6 +307,7 @@ protected:
     //////////////////////////////////////////////////////////////////////////// 
     virtual tBOOL Data_Release(CP7Trace_Desc* i_pData)
     {
+        UNUSED_ARG(i_pData);
         return TRUE; //memory used from pool, not necessary to return
     }// Data_Release
 

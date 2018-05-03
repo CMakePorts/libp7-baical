@@ -72,79 +72,72 @@ enum eP7Trace_Level
 
 
 ////////////////////////////////////////////////////////////////////////////////
-#define P7_DELIVER(i_wID, i_eLevel, i_hModule, i_pFormat, ...) Trace(i_wID,\
+#define P7_DELIVER(i_wID, i_eLevel, i_hModule, ...) Trace(i_wID,\
                                                                      i_eLevel,\
                                                                      i_hModule,\
                                                                      (tUINT16)__LINE__,\
                                                                      __FILE__,\
                                                                      __FUNCTION__,\
-                                                                     i_pFormat,\
                                                                      __VA_ARGS__)
 
 ////////////////////////////////////////////////////////////////////////////////
-#define P7_QTRACE(i_wID, i_hModule, i_pFormat, ...)    P7_DELIVER(i_wID,\
+#define P7_QTRACE(i_wID, i_hModule, ...)    P7_DELIVER(i_wID,\
                                                                   EP7TRACE_LEVEL_TRACE,\
                                                                   i_hModule,\
-                                                                  i_pFormat,\
                                                                   __VA_ARGS__)
-#define P7_TRACE(i_hModule, i_pFormat, ...)            P7_QTRACE(0,\
+
+#define P7_TRACE(i_hModule, ...)            P7_QTRACE(0,\
                                                                  i_hModule,\
-                                                                 i_pFormat,\
                                                                  __VA_ARGS__)
 
 ////////////////////////////////////////////////////////////////////////////////
-#define P7_QDEBUG(i_wID, i_hModule, i_pFormat, ...)    P7_DELIVER(i_wID,\
+#define P7_QDEBUG(i_wID, i_hModule,  ...)    P7_DELIVER(i_wID,\
                                                                   EP7TRACE_LEVEL_DEBUG,\
                                                                   i_hModule,\
-                                                                  i_pFormat,\
                                                                   __VA_ARGS__)
-#define P7_DEBUG(i_hModule, i_pFormat, ...)            P7_QDEBUG(0,\
+
+#define P7_DEBUG(i_hModule,  ...)            P7_QDEBUG(0,\
                                                                  i_hModule,\
-                                                                 i_pFormat,\
                                                                  __VA_ARGS__)
 
 ////////////////////////////////////////////////////////////////////////////////
-#define P7_QINFO(i_wID, i_hModule, i_pFormat, ...)     P7_DELIVER(i_wID,\
+#define P7_QINFO(i_wID, i_hModule,  ...)     P7_DELIVER(i_wID,\
                                                                   EP7TRACE_LEVEL_INFO,\
                                                                   i_hModule,\
-                                                                  i_pFormat,\
                                                                   __VA_ARGS__)
-#define P7_INFO(i_hModule, i_pFormat, ...)             P7_QINFO(0,\
+
+#define P7_INFO(i_hModule,  ...)             P7_QINFO(0,\
                                                                 i_hModule,\
-                                                                i_pFormat,\
                                                                 __VA_ARGS__)
 
 ////////////////////////////////////////////////////////////////////////////////
-#define P7_QWARNING(i_wID, i_hModule, i_pFormat, ...)  P7_DELIVER(i_wID,\
+#define P7_QWARNING(i_wID, i_hModule,  ...)  P7_DELIVER(i_wID,\
                                                                   EP7TRACE_LEVEL_WARNING,\
                                                                   i_hModule,\
-                                                                  i_pFormat,\
                                                                   __VA_ARGS__)
-#define P7_WARNING(i_hModule, i_pFormat, ...)          P7_QWARNING(0,\
+
+#define P7_WARNING(i_hModule,  ...)          P7_QWARNING(0,\
                                                                    i_hModule,\
-                                                                   i_pFormat,\
                                                                    __VA_ARGS__)
 
 ////////////////////////////////////////////////////////////////////////////////
-#define P7_QERROR(i_wID, i_hModule, i_pFormat, ...)    P7_DELIVER(i_wID,\
+#define P7_QERROR(i_wID, i_hModule,  ...)    P7_DELIVER(i_wID,\
                                                                   EP7TRACE_LEVEL_ERROR,\
                                                                   i_hModule,\
-                                                                  i_pFormat,\
                                                                   __VA_ARGS__)
-#define P7_ERROR(i_hModule, i_pFormat, ...)            P7_QERROR(0,\
+
+#define P7_ERROR(i_hModule,  ...)            P7_QERROR(0,\
                                                                  i_hModule,\
-                                                                 i_pFormat,\
                                                                  __VA_ARGS__)
 
 ////////////////////////////////////////////////////////////////////////////////
-#define P7_QCRITICAL(i_wID, i_hModule, i_pFormat, ...) P7_DELIVER(i_wID,\
+#define P7_QCRITICAL(i_wID, i_hModule,  ...) P7_DELIVER(i_wID,\
                                                                   EP7TRACE_LEVEL_CRITICAL,\
                                                                   i_hModule,\
-                                                                  i_pFormat,\
                                                                   __VA_ARGS__)
-#define P7_CRITICAL(i_hModule, i_pFormat, ...)         P7_QCRITICAL(0,\
+
+#define P7_CRITICAL(i_hModule,  ...)         P7_QCRITICAL(0,\
                                                                     i_hModule,\
-                                                                    i_pFormat,\
                                                                     __VA_ARGS__)
 
 //__declspec(novtable)

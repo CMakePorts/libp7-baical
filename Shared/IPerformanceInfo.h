@@ -16,50 +16,31 @@
 // License along with this library.                                            /
 //                                                                             /
 ////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-// This header file provide printing to console                                /
-////////////////////////////////////////////////////////////////////////////////
+#ifndef IPERFORMANCE_INFO_H
+#define IPERFORMANCE_INFO_H
 
-#ifndef CLTEXTCONSOLE_H
-#define CLTEXTCONSOLE_H
 
 ////////////////////////////////////////////////////////////////////////////////
-class CClTextConsole
-    : public CClTextSink
+class IPerformanceInfo
 {
 public:
-    CClTextConsole()
+    enum eCounter
     {
+        eCounterSystemCpu = 0,
+        eCounterProcessCpu,
+        eCounterProcessHandles,
+        eCounterProcessThreads,
+        eCounterProcessMemory,
 
-    }
-    virtual ~CClTextConsole()
-    {
+        eCounterTotal
+    };
 
-    }
-
-    virtual eClient_Status Initialize(tXCHAR **i_pArgs, tINT32 i_iCount)
-    {
-        UNUSED_ARG(i_pArgs);
-        UNUSED_ARG(i_iCount);
-        return ECLIENT_STATUS_OK;
-    }
-
-    virtual eClient_Status Log(const CClTextSink::sLog &i_rRawLog, 
-                               const tXCHAR            *i_pFmtLog, 
-                               size_t                   i_szFmtLog
-                              )
-    {
-        UNUSED_ARG(i_rRawLog);
-        UNUSED_ARG(i_szFmtLog);
-    #ifdef UTF8_ENCODING
-        printf("%s", i_pFmtLog);
-    #else
-        wprintf(L"%s", i_pFmtLog);
-    #endif                             
-        printf("\n");
-        return ECLIENT_STATUS_OK;
-    }
+public:
+    virtual tBOOL   Refresh()                                               = 0;
+    virtual tINT64  Get(IPerformanceInfo::eCounter i_eCounter)              = 0;
+    virtual tINT32  Add_Ref()                                               = 0;
+    virtual tINT32  Release()                                               = 0;
 };
 
 
-#endif //CLTEXTCONSOLE_H
+#endif //IPERFORMANCE_INFO_H

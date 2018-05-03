@@ -49,6 +49,31 @@ static inline tXCHAR* PStrCpy(tXCHAR       *i_pDst,
 }//PStrLen
 
 
+////////////////////////////////////////////////////////////////////////////////
+//PWStrCpy
+static inline tXCHAR* PWStrCpy(tWCHAR       *i_pDst,
+                               size_t        i_szDst,
+                               const tWCHAR *i_pSrc
+                              )
+{
+    wcscpy_s((wchar_t*)i_pDst, i_szDst, (wchar_t*)i_pSrc);
+    return i_pDst;
+}//PWStrCpy
+
+
+////////////////////////////////////////////////////////////////////////////////
+//PStrCpy
+static inline tXCHAR* PStrNCpy(tXCHAR       *i_pDst,
+                              size_t        i_szDst,
+                              const tXCHAR *i_pSrc,
+                              size_t        i_pSrcMaxCount
+                              )
+{
+    wcsncpy_s((wchar_t*)i_pDst, i_szDst, (wchar_t*)i_pSrc, i_pSrcMaxCount);
+    return i_pDst;
+}//PStrLen
+
+
 ///////////////////////////////////////////////////////////////////////////////
 //PStrNCmp
 static inline tINT32 PStrNCmp(const tXCHAR *i_pS1, const tXCHAR *i_pS2, size_t i_szLen)

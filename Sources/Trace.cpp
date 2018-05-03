@@ -251,6 +251,8 @@ CP7Trace_Desc::CP7Trace_Desc(CMemoryManager &i_rMemory,
    
     , m_bInitialized(TRUE)
 {
+    UNUSED_ARG(i_dwFlags);
+
     tUINT32       l_dwFile_Size  = 0;
     tUINT32       l_dwFunc_Size  = 0;
     tUINT32       l_dwForm_Size  = 0;
@@ -1009,6 +1011,18 @@ CP7Trace::CP7Trace(IP7_Client         *i_pClient,
     }
     else
     {
+        const tXCHAR *l_pVerbosiry = m_pClient->Get_Argument(CLIENT_COMMAND_TRACE_VERBOSITY);
+        if (l_pVerbosiry)
+        {
+            eP7Trace_Level l_eVerbosity = (eP7Trace_Level)PStrToInt(l_pVerbosiry);
+            if (    (l_eVerbosity < EP7TRACE_LEVEL_COUNT)
+                 || (l_eVerbosity >= EP7TRACE_LEVEL_TRACE)
+               )
+            {
+                m_eVerbosity = l_eVerbosity;
+            }
+        }
+
         m_pClient->Add_Ref();
     }
 
@@ -2064,6 +2078,14 @@ tBOOL CP7Trace::Trace_Embedded(tUINT16            i_wTrace_ID,
                      NULL
                     );
 #else
+    UNUSED_ARG(i_wTrace_ID);
+    UNUSED_ARG(i_eLevel);
+    UNUSED_ARG(i_hModule);
+    UNUSED_ARG(i_wLine);
+    UNUSED_ARG(i_pFile);
+    UNUSED_ARG(i_pFunction);
+    UNUSED_ARG(i_ppFormat);
+
     static tBOOL g_bVaArgError = FALSE;
     if (!g_bVaArgError)
     {

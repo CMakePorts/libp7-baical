@@ -16,50 +16,49 @@
 // License along with this library.                                            /
 //                                                                             /
 ////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-// This header file provide printing to console                                /
-////////////////////////////////////////////////////////////////////////////////
+#ifndef IPSHARED_LIB_H
+#define IPSHARED_LIB_H
 
-#ifndef CLTEXTCONSOLE_H
-#define CLTEXTCONSOLE_H
+#include "GTypes.h"
 
-////////////////////////////////////////////////////////////////////////////////
-class CClTextConsole
-    : public CClTextSink
+#include "Length.h"
+#include "PString.h"
+#include "WString.h"
+#include "SharedLib.h"
+#include "PAtomic.h"
+
+class CPSharedLib
+    : public CSharedLib
 {
+protected:
+    HMODULE m_pDll;
+
 public:
-    CClTextConsole()
+    CPSharedLib(const tXCHAR *i_pPath)
+        : CSharedLib(i_pPath)
+        , m_pDll(NULL)
     {
+        m_pDll = LoadLibraryW(i_pPath);
 
-    }
-    virtual ~CClTextConsole()
-    {
-
-    }
-
-    virtual eClient_Status Initialize(tXCHAR **i_pArgs, tINT32 i_iCount)
-    {
-        UNUSED_ARG(i_pArgs);
-        UNUSED_ARG(i_iCount);
-        return ECLIENT_STATUS_OK;
+        if (m_pDll)
+        {
+            m_bState = TRUE;
+        }
     }
 
-    virtual eClient_Status Log(const CClTextSink::sLog &i_rRawLog, 
-                               const tXCHAR            *i_pFmtLog, 
-                               size_t                   i_szFmtLog
-                              )
+    void *GetFunction(const tACHAR *i_pName)
     {
-        UNUSED_ARG(i_rRawLog);
-        UNUSED_ARG(i_szFmtLog);
-    #ifdef UTF8_ENCODING
-        printf("%s", i_pFmtLog);
-    #else
-        wprintf(L"%s", i_pFmtLog);
-    #endif                             
-        printf("\n");
-        return ECLIENT_STATUS_OK;
+        return (void*)(GetProcAddress(m_pDll, i_pName));
+    }
+
+    virtual ~CPSharedLib()
+    {
+        if (m_pDll)
+        {
+            FreeLibrary(m_pDll);
+            m_pDll = NULL;
+        }
     }
 };
 
-
-#endif //CLTEXTCONSOLE_H
+#endif //IPSHARED_LIB_H

@@ -48,6 +48,8 @@ protected:
     tBOOL                   m_bConnected;
     tUINT32                 m_dwConnection_Resets;
     IP7_Client::eType       m_eType;
+    tXCHAR                **m_pArgs;
+    tINT32                  m_iArgsCnt;
 
 public:
     CClient(IP7_Client::eType i_eType,
@@ -64,7 +66,7 @@ public:
                               
     virtual eClient_Status    Get_Status();
     virtual tBOOL             Get_Status(sP7C_Status *o_pStatus);
-    //virtual tBOOL             Get_Info(sP7C_Info *o_pInfo)                   = 0;
+    //virtual tBOOL             Get_Info(sP7C_Info *o_pInfo);        
                               
     virtual eClient_Status    Register_Channel(IP7C_Channel *i_pChannel);
     virtual eClient_Status    Unregister_Channel(tUINT32 i_dwID);
@@ -72,14 +74,16 @@ public:
     //virtual eClient_Status Sent(tUINT32          i_dwChannel_ID,
     //                            sP7C_Data_Chunk *i_pChunks, 
     //                            tUINT32          i_dwCount,
-    //                            tUINT32          i_dwSize)                = 0;
+    //                            tUINT32          i_dwSize);
 
     virtual tBOOL             Share(const tXCHAR *i_pName);
                               
+    virtual const tXCHAR     *Get_Argument(const tXCHAR  *i_pName);
+
     virtual tBOOL             Unshare();
 
     //reimplemented in childes, will be called in case of process crash
-    virtual tBOOL             Flush()                                          = 0;
+    virtual tBOOL             Flush() = 0;
                               
 protected:                    
     eClient_Status            Init_Log(tXCHAR **i_pArgs, tINT32 i_iCount);

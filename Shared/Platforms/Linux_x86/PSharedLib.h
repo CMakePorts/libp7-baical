@@ -16,50 +16,60 @@
 // License along with this library.                                            /
 //                                                                             /
 ////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-// This header file provide printing to console                                /
-////////////////////////////////////////////////////////////////////////////////
+#ifndef IPSHARED_LIB_H
+#define IPSHARED_LIB_H
 
-#ifndef CLTEXTCONSOLE_H
-#define CLTEXTCONSOLE_H
+#include "GTypes.h"
 
-////////////////////////////////////////////////////////////////////////////////
-class CClTextConsole
-    : public CClTextSink
+#include "Length.h"
+#include "PString.h"
+#include "WString.h"
+#include "SharedLib.h"
+#include "PAtomic.h"
+#include <dlfcn.h>
+
+class CPSharedLib
+    : public CSharedLib
 {
+protected:
+    void *m_pSo;
+
 public:
-    CClTextConsole()
+    CPSharedLib(const tXCHAR *i_pPath)
+        : CSharedLib(i_pPath)
+        , m_pSo(NULL)
     {
+        m_pSo = dlopen(i_pPath, RTLD_LAZY);
 
-    }
-    virtual ~CClTextConsole()
-    {
-
-    }
-
-    virtual eClient_Status Initialize(tXCHAR **i_pArgs, tINT32 i_iCount)
-    {
-        UNUSED_ARG(i_pArgs);
-        UNUSED_ARG(i_iCount);
-        return ECLIENT_STATUS_OK;
+        if (m_pSo)
+        {
+            m_bState = TRUE;
+        }
     }
 
-    virtual eClient_Status Log(const CClTextSink::sLog &i_rRawLog, 
-                               const tXCHAR            *i_pFmtLog, 
-                               size_t                   i_szFmtLog
-                              )
+    void *GetFunction(const tACHAR *i_pName)
     {
-        UNUSED_ARG(i_rRawLog);
-        UNUSED_ARG(i_szFmtLog);
-    #ifdef UTF8_ENCODING
-        printf("%s", i_pFmtLog);
-    #else
-        wprintf(L"%s", i_pFmtLog);
-    #endif                             
-        printf("\n");
-        return ECLIENT_STATUS_OK;
+        dlerror(); /* Clear any existing error */
+
+        void* l_pReturn = (void*) (dlsym(m_pSo, i_pName));
+        
+        if (NULL != dlerror())
+        {
+            return NULL;
+        }
+
+        return l_pReturn;
+    }
+
+    virtual ~CPSharedLib()
+    {
+        if (m_pSo)
+        {
+            dlclose(m_pSo);
+            m_pSo = NULL;
+        }
     }
 };
 
 
-#endif //CLTEXTCONSOLE_H
+#endif //IPSHARED_LIB_H

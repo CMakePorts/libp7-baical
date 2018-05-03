@@ -229,6 +229,8 @@ P7_EXPORT IP7_Client * __cdecl P7_Get_Shared(const tXCHAR *i_pName)
 //cbCrashHandler
 void __cdecl cbCrashHandler(int i_iType, void *i_pContext)
 {
+    UNUSED_ARG(i_iType);
+    UNUSED_ARG(i_pContext);
     P7_Exceptional_Flush();
 }//cbCrashHandler
 
@@ -366,10 +368,29 @@ CClient::CClient(IP7_Client::eType i_eType,
     , m_bConnected(TRUE)
     , m_dwConnection_Resets(0)
     , m_eType(i_eType)
+    , m_pArgs(NULL)
+    , m_iArgsCnt(0)
+
 {
     memset(m_pChannels, 0, sizeof(IP7C_Channel*)*USER_PACKET_CHANNEL_ID_MAX_SIZE);
     memset(&m_hCS,      0, sizeof(m_hCS));
     memset(&m_hCS_Reg,  0, sizeof(m_hCS_Reg));
+
+    if (    (i_pArgs)
+         && (i_iCount)
+       )
+    {
+        m_iArgsCnt = i_iCount;
+        m_pArgs    = (tXCHAR **)malloc(sizeof(tXCHAR *) * m_iArgsCnt);
+
+        if (m_pArgs)
+        {
+            for (int l_iI = 0; l_iI < m_iArgsCnt; l_iI ++)
+            {
+                m_pArgs[l_iI] = PStrDub(i_pArgs[l_iI]);
+            }
+        }
+    }
 
     LOCK_CREATE(m_hCS_Reg);
     LOCK_CREATE(m_hCS);
@@ -387,6 +408,19 @@ CClient::~CClient()
     {
         m_pLog->Release();
         m_pLog = NULL;
+    }
+
+    if (m_pArgs)
+    {
+        for (int l_iI = 0; l_iI < m_iArgsCnt; l_iI ++)
+        {
+            PStrFreeDub(m_pArgs[l_iI]);
+            m_pArgs[l_iI] = NULL;
+        }
+
+        free(m_pArgs);
+        m_pArgs    = NULL;
+        m_iArgsCnt = 0;
     }
 
     LOCK_DESTROY(m_hCS_Reg);
@@ -548,6 +582,15 @@ tBOOL CClient::Share(const tXCHAR *i_pName)
 
 
 ////////////////////////////////////////////////////////////////////////////////
+//Get_Argument
+const tXCHAR *CClient::Get_Argument(const tXCHAR  *i_pName)
+{
+    return Get_Argument_Text_Value(m_pArgs, m_iArgsCnt, i_pName);
+}
+
+
+
+////////////////////////////////////////////////////////////////////////////////
 //Unshare()
 tBOOL CClient::Unshare()
 {
@@ -565,9 +608,7 @@ tBOOL CClient::Unshare()
 
 ////////////////////////////////////////////////////////////////////////////////
 //Init_Log
-eClient_Status CClient::Init_Log(tXCHAR **i_pArgs,
-                                 tINT32   i_iCount
-                                )
+eClient_Status CClient::Init_Log(tXCHAR **i_pArgs, tINT32 i_iCount)
 {
     tXCHAR          *l_pArg_Value   = NULL;
     IJournal::eLevel l_eVerbosity   = IJournal::eLEVEL_CRITICAL;

@@ -113,6 +113,7 @@ CClFile::~CClFile()
     m_cBuffer_Ready.Clear(TRUE);
 
     m_cFiles.Clear(TRUE);
+    m_cSecondsList.Clear(TRUE);
 
     CClient::Unshare();
 }//~CClFile()
@@ -393,6 +394,10 @@ eClient_Status CClFile::Init_File(tXCHAR **i_pArgs,
             {
                 m_eRolling = EROLLING_MEGABYTES;
             }
+            else if (0 == PStrICmp(l_pSuffix, TM("tm")))
+            {
+                m_eRolling = EROLLING_TIME;
+            }
             else
             {
                 l_bError = TRUE;
@@ -408,11 +413,23 @@ eClient_Status CClFile::Init_File(tXCHAR **i_pArgs,
 
         if (FALSE == l_bError)
         {
-            m_qwRolling_Value = PStrToInt(l_cRolling.Get());
-
-            if (0 >= m_qwRolling_Value)
+            if (m_eRolling != EROLLING_TIME)
             {
-                m_eRolling = EROLLING_NONE;
+                m_qwRolling_Value = PStrToInt(l_cRolling.Get());
+
+                if (0 >= m_qwRolling_Value)
+                {
+                    m_eRolling = EROLLING_NONE;
+                    l_bError   = TRUE;
+                }
+            }
+            else
+            {
+                if (!Parse_Rolling_Time(l_cRolling.Get()))
+                {
+                    m_eRolling = EROLLING_NONE;
+                    l_bError   = TRUE;
+                }
             }
         }
 
@@ -565,6 +582,79 @@ eClient_Status CClFile::Create_File()
 
     return l_eReturn;
 }// Create_File
+
+
+////////////////////////////////////////////////////////////////////////////////
+//Parse_Rolling_Time
+tBOOL CClFile::Parse_Rolling_Time(const tXCHAR *i_pTime)
+{
+    const tXCHAR *l_pIter   = i_pTime;
+    const tXCHAR *l_pBegin  = i_pTime;
+    tBOOL         l_bReturn = TRUE;
+
+    while (*l_pIter)
+    {
+        tUINT32 l_uiSeconds = 0;
+        tUINT32 l_uiValue   = 0;
+
+        l_pBegin = l_pIter; //scan hours
+        while (    (*l_pIter >= TM('0')) 
+                && (*l_pIter <= TM('9'))
+                )
+        {
+            l_uiValue = l_uiValue * 10 + (*l_pIter - TM('0'));
+            l_pIter ++;
+        }
+
+        if (l_pBegin == l_pIter) //no digits
+        {
+            l_bReturn = FALSE;
+            break;
+        }
+
+        l_uiSeconds = l_uiValue * 3600; 
+                    
+        if (*l_pIter != TM(':')) //error
+        {
+            l_bReturn = FALSE;
+            break;
+        }
+
+        l_pIter++;
+
+        l_pBegin  = l_pIter; //scan minutes
+        l_uiValue = 0;
+        while (    (*l_pIter >= TM('0'))
+                && (*l_pIter <= TM('9'))
+                )
+        {
+            l_uiValue = l_uiValue * 10 + (*l_pIter - TM('0'));
+            l_pIter ++;
+        }
+
+        if (l_pBegin == l_pIter) //no digits
+        {
+            l_bReturn = FALSE;
+            break;
+        }
+
+        l_uiSeconds += l_uiValue * 60; 
+
+        m_cSecondsList.Add_After(m_cSecondsList.Get_Last(), l_uiSeconds);
+
+        if (*l_pIter == TM(','))
+        {
+            l_pIter++;
+        }
+    }
+
+    if (!m_cSecondsList.Count())
+    {
+        l_bReturn = FALSE;
+    }
+
+    return l_bReturn;
+}//Parse_Rolling_Time
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1040,6 +1130,7 @@ void CClFile::Routine()
     tUINT32     l_dwIteration    = 0;
     tBOOL       l_bRoll          = FALSE;
     sBuffer    *l_pBuffer        = NULL;
+    tUINT32     l_uiSecond       = GetSecondOfDay(); 
 
     while (FALSE == l_bExit)
     {
@@ -1062,7 +1153,7 @@ void CClFile::Routine()
 
             if (    (EROLLING_MEGABYTES == m_eRolling)
                  && (m_qwRolling_Value <= m_qwFile_Size)
-                )
+               )
             {
                 l_bRoll = TRUE;
             }
@@ -1111,12 +1202,36 @@ void CClFile::Routine()
             l_dwWait_TimeOut = THREAD_IDLE_TIMEOUT;
         }
 
-        if (    (EROLLING_HOURS == m_eRolling)
-             && (0 == (l_dwIteration & 0xF))
-             && (CTicks::Difference(GetTickCount(), m_dwFile_Tick) > m_qwRolling_Value)
-           )
+        if (EROLLING_HOURS == m_eRolling)
         {
-            Roll();
+            if (    (0 == (l_dwIteration & 0x3F))
+                 && (CTicks::Difference(GetTickCount(), m_dwFile_Tick) > m_qwRolling_Value)
+               )
+            {
+                Roll();
+            }
+        }
+        else if (EROLLING_TIME == m_eRolling)
+        {
+            if (0 == (l_dwIteration & 0x3F))
+            {
+                tUINT32     l_uiNextSecond = GetSecondOfDay(); 
+                pAList_Cell l_pEl         = NULL;
+
+                while ((l_pEl = m_cSecondsList.Get_Next(l_pEl)))
+                {
+                    tUINT32 l_uiIem = m_cSecondsList.Get_Data(l_pEl);
+                    if (    (l_uiSecond <= l_uiIem)
+                         && (l_uiNextSecond > l_uiIem)
+                       )
+                    {
+                        Roll();
+                        break;
+                    }
+                }
+
+                l_uiSecond = l_uiNextSecond;
+            }
         }
 
         l_dwIteration++;

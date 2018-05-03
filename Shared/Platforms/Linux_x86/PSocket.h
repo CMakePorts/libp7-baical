@@ -23,8 +23,12 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <unistd.h>
 #include <errno.h>
 #include <netdb.h>
+#include <ifaddrs.h>
+#include "AList.h"
+#include <string.h>
 
 
 #ifdef __ARM_ARCH_5TEJ__
@@ -102,10 +106,61 @@ static __attribute__ ((unused)) void WSA_UnInit()
     //WSACleanup();
 }//WSA_UnInit
 
+////////////////////////////////////////////////////////////////////////////////
+//PEnumIps
+static __attribute__ ((unused)) tBOOL PEnumIps(CBList<sockaddr_storage*> *io_pList)
+{
+    if (!io_pList)
+    {
+        return FALSE;
+    }
+
+    io_pList->Clear(TRUE);
+
+    struct ifaddrs *l_pIfAddr = NULL;
+
+    if (-1 == getifaddrs(&l_pIfAddr))
+    {
+        return FALSE;
+    }
+
+    for (struct ifaddrs *l_pAddr = l_pIfAddr; l_pAddr != NULL; l_pAddr = l_pAddr->ifa_next)
+    {
+        if (    (l_pAddr->ifa_addr == NULL)
+             || (    (AF_INET != l_pAddr->ifa_addr->sa_family)
+                  && (AF_INET6 != l_pAddr->ifa_addr->sa_family)
+                )
+           )
+        {
+            continue;
+        }
+
+        sockaddr_storage *l_pNew = new sockaddr_storage;
+        if (AF_INET == l_pAddr->ifa_addr->sa_family)
+        {
+            memcpy(l_pNew, l_pAddr->ifa_addr, sizeof(sockaddr_in));
+        }
+        else if (AF_INET6 == l_pAddr->ifa_addr->sa_family)
+        {
+            memcpy(l_pNew, l_pAddr->ifa_addr, sizeof(sockaddr_in6));
+        }
+        else
+        {
+            memset(l_pNew, 0, sizeof(sockaddr_storage));
+        }
+
+        io_pList->Add_After(NULL, l_pNew);
+    }
+
+    freeifaddrs(l_pIfAddr);
+
+    return TRUE;
+}//PEnumIps
+
 
 ////////////////////////////////////////////////////////////////////////////////
 //Print_SAddr
-static tBOOL Print_SAddr(sockaddr *i_pAddress, XCHAR *o_pIP, tUINT32 i_dwLen)
+static __attribute__ ((unused)) tBOOL Print_SAddr(sockaddr *i_pAddress, XCHAR *o_pIP, tUINT32 i_dwLen)
 {
     tBOOL l_bReturn = FALSE;
 
@@ -154,7 +209,7 @@ static tBOOL Print_SAddr(sockaddr *i_pAddress, XCHAR *o_pIP, tUINT32 i_dwLen)
 
 ////////////////////////////////////////////////////////////////////////////////
 //Disable_PortUnreachable_ICMP
-static tBOOL Disable_PortUnreachable_ICMP(tSOCKET i_hSocket)
+static __attribute__ ((unused)) tBOOL Disable_PortUnreachable_ICMP(tSOCKET i_hSocket)
 {
     UNUSED_ARG(i_hSocket);
 

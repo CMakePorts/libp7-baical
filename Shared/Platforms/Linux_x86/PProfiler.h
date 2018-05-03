@@ -16,50 +16,84 @@
 // License along with this library.                                            /
 //                                                                             /
 ////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-// This header file provide printing to console                                /
-////////////////////////////////////////////////////////////////////////////////
+#pragma once
 
-#ifndef CLTEXTCONSOLE_H
-#define CLTEXTCONSOLE_H
+#include "PTime.h"
+#include "Ticks.h"
 
-////////////////////////////////////////////////////////////////////////////////
-class CClTextConsole
-    : public CClTextSink
+class CTickHi
 {
+    tUINT64 m_qwCounter;
+    tUINT64 m_qwMarkIn;
+    tUINT64 m_qwMarkOut;
+    tUINT64 m_qwResolution;
 public:
-    CClTextConsole()
+    CTickHi()
     {
+        m_qwMarkIn     = 0ull;
+        m_qwMarkOut    = 0ull;
+        m_qwCounter    = 0ull;
+        m_qwResolution = GetPerformanceFrequency();
 
-    }
-    virtual ~CClTextConsole()
-    {
-
-    }
-
-    virtual eClient_Status Initialize(tXCHAR **i_pArgs, tINT32 i_iCount)
-    {
-        UNUSED_ARG(i_pArgs);
-        UNUSED_ARG(i_iCount);
-        return ECLIENT_STATUS_OK;
+        Reset();
+        Start();
     }
 
-    virtual eClient_Status Log(const CClTextSink::sLog &i_rRawLog, 
-                               const tXCHAR            *i_pFmtLog, 
-                               size_t                   i_szFmtLog
-                              )
+    void Start()
     {
-        UNUSED_ARG(i_rRawLog);
-        UNUSED_ARG(i_szFmtLog);
-    #ifdef UTF8_ENCODING
-        printf("%s", i_pFmtLog);
-    #else
-        wprintf(L"%s", i_pFmtLog);
-    #endif                             
-        printf("\n");
-        return ECLIENT_STATUS_OK;
+        m_qwMarkIn = GetPerformanceCounter();
+    }
+
+    void Stop()
+    {
+        m_qwMarkOut = GetPerformanceCounter();
+        m_qwCounter += m_qwMarkOut - m_qwMarkIn;
+    }
+
+    void Reset()
+    {
+        m_qwCounter = 0;
+    }
+
+    //Second == 100 000;
+    tUINT32 Get()
+    {
+        return (tUINT32)(m_qwCounter * 100000ULL / m_qwResolution);
     }
 };
 
+class CTickLow
+{
+    tUINT32 m_dwStart;
+    tUINT32 m_dwStop;
+public:
+    CTickLow()
+    {
+        m_dwStart = 0;
+        m_dwStop = 0;
 
-#endif //CLTEXTCONSOLE_H
+        Reset();
+        Start();
+    }
+
+    void Start()
+    {
+        m_dwStart = GetTickCount();
+    }
+
+    void Stop()
+    {
+        m_dwStop = GetTickCount();
+    }
+
+    void Reset()
+    {
+        m_dwStop = 0;
+    }
+
+    //frequency 1 000 per second
+    tUINT32 Get()
+    {
+        return CTicks::Difference(m_dwStop, m_dwStart);
+    }
+};

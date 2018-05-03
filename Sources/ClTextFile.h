@@ -39,6 +39,9 @@ class CClTextFile
         EROLLING_NONE,
         EROLLING_MEGABYTES,
         EROLLING_HOURS,
+        EROLLING_TIME,
+
+        EROLLING_MAX
     };
 
     CPFile             m_cFile;
@@ -53,6 +56,9 @@ class CClTextFile
     tXCHAR            *m_pBuffer;
     size_t             m_szBuffer;
     size_t             m_szBufferOffs;
+    CUintList          m_cSecondsList;
+    tUINT32            m_uiSecond;
+
 
 public:
     ////////////////////////////////////////////////////////////////////////////
@@ -69,6 +75,7 @@ public:
         , m_szBufferOffs(0)
     {
         m_dwWrite_Tick = GetTickCount();
+        m_uiSecond     = GetSecondOfDay(); 
     }
 
     ////////////////////////////////////////////////////////////////////////////
@@ -85,6 +92,8 @@ public:
             m_pBuffer = NULL;
         }
         m_szBufferOffs = 0;
+
+        m_cSecondsList.Clear(TRUE);
     }
 
     ////////////////////////////////////////////////////////////////////////////
@@ -108,9 +117,9 @@ public:
 
         //unicode marker
     #ifdef UTF8_ENCODING
-        m_pBuffer[0]   = 0xEF;
-        m_pBuffer[1]   = 0xBB;
-        m_pBuffer[2]   = 0xBF;
+        m_pBuffer[0]   = (char)0xEF;
+        m_pBuffer[1]   = (char)0xBB;
+        m_pBuffer[2]   = (char)0xBF;
         m_szBufferOffs = 3;
         m_qwFile_Size  = 3;
     #else
@@ -227,6 +236,10 @@ public:
                 {
                     m_eRolling = EROLLING_MEGABYTES;
                 }
+                else if (0 == PStrICmp(l_pSuffix, TM("tm")))
+                {
+                    m_eRolling = EROLLING_TIME;
+                }
                 else
                 {
                     l_bError = TRUE;
@@ -242,11 +255,23 @@ public:
 
             if (FALSE == l_bError)
             {
-                m_qwRolling_Value = PStrToInt(l_cRolling.Get());
-
-                if (0 >= m_qwRolling_Value)
+                if (m_eRolling != EROLLING_TIME)
                 {
-                    m_eRolling = EROLLING_NONE;
+                    m_qwRolling_Value = PStrToInt(l_cRolling.Get());
+
+                    if (0 >= m_qwRolling_Value)
+                    {
+                        m_eRolling = EROLLING_NONE;
+                        l_bError   = TRUE;
+                    }
+                }
+                else
+                {
+                    if (!Parse_Rolling_Time(l_cRolling.Get()))
+                    {
+                        m_eRolling = EROLLING_NONE;
+                        l_bError   = TRUE;
+                    }
                 }
             }
 
@@ -275,6 +300,80 @@ public:
         return l_eReturn;
     }
 
+
+    ////////////////////////////////////////////////////////////////////////////////
+    //Parse_Rolling_Time
+    tBOOL Parse_Rolling_Time(const tXCHAR *i_pTime)
+    {
+        const tXCHAR *l_pIter   = i_pTime;
+        const tXCHAR *l_pBegin  = i_pTime;
+        tBOOL         l_bReturn = TRUE;
+
+        while (*l_pIter)
+        {
+            tUINT32 l_uiSeconds = 0;
+            tUINT32 l_uiValue   = 0;
+
+            l_pBegin = l_pIter; //scan hours
+            while (    (*l_pIter >= TM('0')) 
+                    && (*l_pIter <= TM('9'))
+                    )
+            {
+                l_uiValue = l_uiValue * 10 + (*l_pIter - TM('0'));
+                l_pIter ++;
+            }
+
+            if (l_pBegin == l_pIter) //no digits
+            {
+                l_bReturn = FALSE;
+                break;
+            }
+
+            l_uiSeconds = l_uiValue * 3600; 
+                    
+            if (*l_pIter != TM(':')) //error
+            {
+                l_bReturn = FALSE;
+                break;
+            }
+
+            l_pIter++;
+
+            l_pBegin  = l_pIter; //scan minutes
+            l_uiValue = 0;
+            while (    (*l_pIter >= TM('0'))
+                    && (*l_pIter <= TM('9'))
+                    )
+            {
+                l_uiValue = l_uiValue * 10 + (*l_pIter - TM('0'));
+                l_pIter ++;
+            }
+
+            if (l_pBegin == l_pIter) //no digits
+            {
+                l_bReturn = FALSE;
+                break;
+            }
+
+            l_uiSeconds += l_uiValue * 60; 
+
+            m_cSecondsList.Add_After(m_cSecondsList.Get_Last(), l_uiSeconds);
+
+            if (*l_pIter == TM(','))
+            {
+                l_pIter++;
+            }
+        }
+
+        if (!m_cSecondsList.Count())
+        {
+            l_bReturn = FALSE;
+        }
+
+        return l_bReturn;
+    }//Parse_Rolling_Time
+
+
     ////////////////////////////////////////////////////////////////////////////
     //Log
     virtual eClient_Status Log(const CClTextSink::sLog &i_rRawLog, 
@@ -282,6 +381,7 @@ public:
                                size_t                   i_szFmtLog
                               )
     {
+        UNUSED_ARG(i_rRawLog);
         if (    ((i_szFmtLog + 16) > (m_szBuffer - m_szBufferOffs))
              || (CTicks::Difference(GetTickCount(), m_dwWrite_Tick) >= TXT_FILE_WRITE_PERIOD)
            )
@@ -318,6 +418,13 @@ public:
         m_szBufferOffs += 2;
         m_qwFile_Size  += (i_szFmtLog + 2) * sizeof(tXCHAR);
 
+        return ECLIENT_STATUS_OK;
+    }
+
+    ////////////////////////////////////////////////////////////////////////////
+    // TryRoll                                      
+    eClient_Status TryRoll()
+    {
         if (   (    (EROLLING_HOURS == m_eRolling)
                  && (CTicks::Difference(GetTickCount(), m_dwFile_Tick) > m_qwRolling_Value)
                )
@@ -325,19 +432,44 @@ public:
                  && (m_qwRolling_Value <= m_qwFile_Size)
                )
            )
-        
         {
-            m_cFile.Write((tUINT8*)m_pBuffer, m_szBufferOffs * sizeof(tXCHAR), FALSE);
-            m_cFile.Close(TRUE);
-            m_qwFile_Size  = 0ull;
-            m_szBufferOffs = 0u;
-            Create_File();
-            m_dwWrite_Tick = GetTickCount();
+            Roll();
+        }
+        else if (EROLLING_TIME == m_eRolling)
+        {
+            tUINT32     l_uiNextSecond = GetSecondOfDay(); 
+            pAList_Cell l_pEl          = NULL;
+
+            while ((l_pEl = m_cSecondsList.Get_Next(l_pEl)))
+            {
+                tUINT32 l_uiIem = m_cSecondsList.Get_Data(l_pEl);
+                if (    (m_uiSecond <= l_uiIem)
+                     && (l_uiNextSecond > l_uiIem)
+                   )
+                {
+                    Roll();
+                    break;
+                }
+            }
+
+            m_uiSecond = l_uiNextSecond;
         }
 
-        return ECLIENT_STATUS_OK;
-    }
+        return ECLIENT_STATUS_OK; 
+    }// TryRoll
 
+
+    ////////////////////////////////////////////////////////////////////////////
+    // Roll                                      
+    void Roll()
+    {
+        m_cFile.Write((tUINT8*)m_pBuffer, m_szBufferOffs * sizeof(tXCHAR), FALSE);
+        m_cFile.Close(TRUE);
+        m_qwFile_Size  = 0ull;
+        m_szBufferOffs = 0u;
+        Create_File();
+        m_dwWrite_Tick = GetTickCount();
+    }// Roll
 
     ////////////////////////////////////////////////////////////////////////////
     // Create_File                                      

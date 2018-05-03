@@ -50,4 +50,18 @@
 #include "P7_Extensions.h"
 
 
+////////////////////////////////////////////////////////////////////////////////
+//CUintList
+class CUintList
+    : public CListPool<tUINT32>
+{
+protected:
+    virtual tBOOL Data_Release(tUINT32 i_pData)
+    {
+        UNUSED_ARG(i_pData);
+        return TRUE;
+    }
+};
+
+
 #endif //COMMONCLIENT_H

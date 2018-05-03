@@ -25,6 +25,22 @@
 #include <crtdbg.h>
 #include "signal.h"
 
+class IBreakdownNotify
+{
+public:
+    enum eCode
+    {
+        eException,
+        ePureCall,
+        eMemAlloc,
+        eInvalidParameter,
+        eSignal,
+        eMax
+    };
+
+    virtual void BreakdownNotify(IBreakdownNotify::eCode i_eCode, const void *i_pContext) = 0;
+};
+
 typedef void (__cdecl *fnCrashHandler)(int i_iType, void *i_pContext);
 
 struct stChContext

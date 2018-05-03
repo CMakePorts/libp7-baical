@@ -1625,6 +1625,13 @@ void CClText::Routine()
         }
 
         l_dwIteration++;
+
+        if (    (m_pSink)
+             && (0 == (l_dwIteration & 0x3F))
+           )
+        {
+            m_pSink->TryRoll();
+        }
     }
 }//Comm_Routine
 

@@ -91,6 +91,8 @@ public:
                                const tXCHAR            *i_pFmtLog, 
                                size_t                   i_szFmtLog
                               ) = 0;
+
+    virtual eClient_Status TryRoll() { return ECLIENT_STATUS_OK; }
 };
 
 

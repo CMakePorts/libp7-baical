@@ -132,6 +132,7 @@
     
         #define ATOMIC_ADD(io_Val, i_Add) __sync_add_and_fetch(io_Val, i_Add)
         #define ATOMIC_SUB(io_Val, i_Add) __sync_sub_and_fetch(io_Val, i_Add)
+        #define ATOMIC_SET(io_Var, i_Val) __sync_lock_test_and_set(io_Var, i_Val)
     
 #endif //#ifdef __ARM_ARCH_5TEJ__
 

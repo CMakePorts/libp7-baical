@@ -257,6 +257,95 @@ public:
         return -1;
     }
 
+
+    template<typename ValType>
+    static tBOOL Str2Hex(const tXCHAR *i_pHex, size_t i_szCount, ValType &o_rVal)
+    {
+        tBOOL l_bReturn = TRUE;
+        o_rVal = 0;
+
+
+        if (!i_pHex)
+        {
+            return FALSE;
+        }
+
+        while (i_szCount--)
+        {
+            if ((TM('0') <= (*i_pHex)) && (TM('9') >= (*i_pHex)))
+            {
+                o_rVal = (o_rVal << 4) + ((*i_pHex) - TM('0'));
+            }
+            else if ((TM('A') <= (*i_pHex)) && (TM('F') >= (*i_pHex)))
+            {
+                o_rVal = (o_rVal << 4) + ((*i_pHex) - TM('A') + 10);
+            }
+            else if ((TM('a') <= (*i_pHex)) && (TM('f') >= (*i_pHex)))
+            {
+                o_rVal = (o_rVal << 4) + ((*i_pHex) - TM('a') + 10);
+            }
+            else if (0 == (*i_pHex))
+            {
+                break;
+            }
+            else
+            {
+                l_bReturn = FALSE;
+                break;
+            }
+
+            i_pHex++;
+        }
+
+        return l_bReturn;
+    }
+
+    static tBOOL ScanGuid(const tXCHAR *i_pGuidText, GUID &o_rGUID)
+    {
+        if (    (!i_pGuidText)    
+             || (TM('{')!= *i_pGuidText)
+           )
+        {
+            return FALSE;
+        }
+
+        i_pGuidText++;
+
+        if (!CWString::Str2Hex(i_pGuidText, 8, (tUINT32&)o_rGUID.Data1)) return FALSE; 
+        i_pGuidText += 9;
+
+        if (!CWString::Str2Hex(i_pGuidText, 4, (tUINT16&)o_rGUID.Data2)) return FALSE; 
+        i_pGuidText += 5;
+
+        if (!CWString::Str2Hex(i_pGuidText, 4, (tUINT16&)o_rGUID.Data3)) return FALSE; 
+        i_pGuidText += 5;
+
+        if (!CWString::Str2Hex(i_pGuidText, 2, (tUINT8&)o_rGUID.Data4[0])) return FALSE; 
+        i_pGuidText += 2;
+        if (!CWString::Str2Hex(i_pGuidText, 2, (tUINT8&)o_rGUID.Data4[1])) return FALSE; 
+        i_pGuidText += 3;
+        if (!CWString::Str2Hex(i_pGuidText, 2, (tUINT8&)o_rGUID.Data4[2])) return FALSE; 
+        i_pGuidText += 2;
+        if (!CWString::Str2Hex(i_pGuidText, 2, (tUINT8&)o_rGUID.Data4[3])) return FALSE; 
+        i_pGuidText += 2;
+        if (!CWString::Str2Hex(i_pGuidText, 2, (tUINT8&)o_rGUID.Data4[4])) return FALSE; 
+        i_pGuidText += 2;
+        if (!CWString::Str2Hex(i_pGuidText, 2, (tUINT8&)o_rGUID.Data4[5])) return FALSE; 
+        i_pGuidText += 2;
+        if (!CWString::Str2Hex(i_pGuidText, 2, (tUINT8&)o_rGUID.Data4[6])) return FALSE; 
+        i_pGuidText += 2;
+        if (!CWString::Str2Hex(i_pGuidText, 2, (tUINT8&)o_rGUID.Data4[7])) return FALSE; 
+        i_pGuidText += 2;
+
+        if (TM('}') != *i_pGuidText)
+        {
+            return FALSE;
+        }
+
+        return TRUE;
+    }
+
+
 private:
     void Remove()
     {

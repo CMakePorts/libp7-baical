@@ -86,6 +86,7 @@ CClBaical::CClBaical(tXCHAR **i_pArgs, tINT32   i_iCount)
     , m_bChnl_Thread(FALSE)
     , m_hChnl_Thread(0) //NULL
 
+    , m_bLocalHost(FALSE)
 {
     memset(&m_hCS_Data_Out, 0, sizeof(m_hCS_Data_Out));
     memset(&m_hCS_Data_In,  0, sizeof(m_hCS_Data_In));
@@ -266,6 +267,14 @@ eClient_Status CClBaical::Init_Sockets(tXCHAR **i_pArgs,
             l_pPort = (tXCHAR*)TM("9009");
         }
 
+
+        if (    (0 == PStrICmp(l_pAddr, TM("127.0.0.1")))
+             || (0 == PStrICmp(l_pAddr, TM("::1")))
+           )
+        {
+            m_bLocalHost = TRUE;
+        }
+
         l_tHint.ai_family   = AF_UNSPEC; //AF_INET;
         l_tHint.ai_socktype = SOCK_DGRAM;
         l_tHint.ai_protocol = IPPROTO_UDP;
@@ -322,10 +331,9 @@ eClient_Status CClBaical::Init_Pool(tXCHAR **i_pArgs,
                                     tINT32   i_iCount
                                    )
 {
-    //eClient_Status l_eReturn       = ECLIENT_STATUS_OK;
-    tXCHAR        *l_pArg_Value    = NULL;
-    tUINT32        l_dwMax_Memory  = 0x100000; //1mb by default
-    tUINT32        l_dwPacket_Size = TPACKET_MIN_SIZE;
+    tXCHAR  *l_pArg_Value    = NULL;
+    tUINT32  l_dwMax_Memory  = 0x100000; //1mb by default
+    tUINT32  l_dwPacket_Size = TPACKET_MIN_SIZE;
 
     ////////////////////////////////////////////////////////////////////////////
     //packet size
@@ -343,6 +351,11 @@ eClient_Status CClBaical::Init_Pool(tXCHAR **i_pArgs,
         {
             l_dwPacket_Size = TPACKET_MAX_SIZE;
         }
+    }
+
+    if (m_bLocalHost)
+    {
+        l_dwPacket_Size = TPACKET_MAX_SIZE;
     }
 
     ////////////////////////////////////////////////////////////////////////////
@@ -1673,7 +1686,7 @@ eClient_Status CClBaical::Sent(tUINT32          i_dwChannel_ID,
                        l_pChunk->dwSize
                       );
 
-                l_cData.Append_Size((tUINT16)l_pChunk->dwSize );
+                l_cData.Append_Size((tUINT16)l_pChunk->dwSize);
 
                 //current chunk was moved, we reduce chunks amount 
                 --i_dwCount;

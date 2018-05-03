@@ -16,50 +16,57 @@
 // License along with this library.                                            /
 //                                                                             /
 ////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-// This header file provide printing to console                                /
-////////////////////////////////////////////////////////////////////////////////
+#ifndef PPERFORMANCE_INFO_H
+#define PPERFORMANCE_INFO_H
 
-#ifndef CLTEXTCONSOLE_H
-#define CLTEXTCONSOLE_H
+#include "IPerformanceInfo.h"
 
 ////////////////////////////////////////////////////////////////////////////////
-class CClTextConsole
-    : public CClTextSink
+class CPerformanceInfo
+    : public IPerformanceInfo
 {
+    volatile tINT32 m_iRCnt;
 public:
-    CClTextConsole()
+    ////////////////////////////////////////////////////////////////////////////
+    CPerformanceInfo(const tXCHAR *i_pProcessName)
+        : m_iRCnt(1)
     {
-
-    }
-    virtual ~CClTextConsole()
-    {
-
+        UNUSED_ARG(i_pProcessName);
     }
 
-    virtual eClient_Status Initialize(tXCHAR **i_pArgs, tINT32 i_iCount)
+    virtual ~CPerformanceInfo()
     {
-        UNUSED_ARG(i_pArgs);
-        UNUSED_ARG(i_iCount);
-        return ECLIENT_STATUS_OK;
     }
 
-    virtual eClient_Status Log(const CClTextSink::sLog &i_rRawLog, 
-                               const tXCHAR            *i_pFmtLog, 
-                               size_t                   i_szFmtLog
-                              )
+    tBOOL Refresh()
     {
-        UNUSED_ARG(i_rRawLog);
-        UNUSED_ARG(i_szFmtLog);
-    #ifdef UTF8_ENCODING
-        printf("%s", i_pFmtLog);
-    #else
-        wprintf(L"%s", i_pFmtLog);
-    #endif                             
-        printf("\n");
-        return ECLIENT_STATUS_OK;
+        return TRUE;
+    }
+
+    tINT64 Get(IPerformanceInfo::eCounter i_eCounter)
+    {
+        UNUSED_ARG(i_eCounter);
+        return 0;
+    }
+
+    ////////////////////////////////////////////////////////////////////////////
+    tINT32  Add_Ref()
+    {
+        return ATOMIC_INC(&m_iRCnt);
+    }
+    
+    ////////////////////////////////////////////////////////////////////////////
+    tINT32  Release()  
+    {
+        volatile tINT32 l_iReturn = ATOMIC_DEC(&m_iRCnt);
+
+        if (0 >= l_iReturn)
+        {
+            delete this;
+        }
+        
+        return l_iReturn;
     }
 };
 
-
-#endif //CLTEXTCONSOLE_H
+#endif //PPERFORMANCE_INFO_H

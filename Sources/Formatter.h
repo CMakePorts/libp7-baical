@@ -170,6 +170,8 @@ protected:
         eTypePointer,
         eTypeUintBin,
         eTypeNone,
+
+        eTypeMax
     };
 
     ////////////////////////////////////////////////////////////////////////////
@@ -949,7 +951,7 @@ public:
                     COPY_ARG(l_iVal, g_pSize[l_pP7Args->bType], l_pP7Args->bSize);
 
                 #ifdef UTF8_ENCODING
-                    tWCHAR l_pWstr[2] = {l_iVal, 0};
+                    tWCHAR l_pWstr[2] = {(tWCHAR)l_iVal, 0};
                     l_szReturn += (size_t)Convert_UTF16_To_UTF8((tWCHAR*)l_pWstr, 
                                                                 o_pBuffer + l_szReturn, 
                                                                 (tUINT32)(i_szBuffer - l_szReturn)

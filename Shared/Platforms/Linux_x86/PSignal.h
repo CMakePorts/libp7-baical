@@ -31,6 +31,23 @@
 //Linux signal handling article:
 //http://www.linuxprogrammingblog.com/all-about-linux-signals?page=show
 
+class IBreakdownNotify
+{
+public:
+    enum eCode
+    {
+        eException,
+        ePureCall,
+        eMemAlloc,
+        eInvalidParameter,
+        eSignal,
+        eMax
+    };
+
+    virtual void BreakdownNotify(IBreakdownNotify::eCode i_eCode, const void *i_pContext) = 0;
+};
+
+
 typedef void (__cdecl *fnCrashHandler)(int i_iType, void *i_pContext);
 
 struct stChContext
@@ -40,12 +57,12 @@ struct stChContext
     fnCrashHandler pUserHandler;
 };
 
-static stChContext g_stContext = {0};
+static stChContext g_stContext = {0, 0, 0};
 
 
 ////////////////////////////////////////////////////////////////////////////////
 //Get_Signal_Text
-static const char *ChGetSignalText(int i_iSignal, siginfo_t* i_pSigInfo)
+static __attribute__ ((unused)) const char *ChGetSignalText(int i_iSignal, siginfo_t* i_pSigInfo)
 {
     if (i_iSignal == SIGBUS)
     {
@@ -90,8 +107,9 @@ static const char *ChGetSignalText(int i_iSignal, siginfo_t* i_pSigInfo)
 
 ////////////////////////////////////////////////////////////////////////////////
 //ChHandler
-static void ChHandler(int i_iSignal, siginfo_t *i_pSigInfo, void *i_pContext)
+static __attribute__ ((unused)) void ChHandler(int i_iSignal, siginfo_t *i_pSigInfo, void *i_pContext)
 {
+    UNUSED_ARG(i_pContext);
     if (g_stContext.iProcessed)
     {
         return;
@@ -111,7 +129,7 @@ static void ChHandler(int i_iSignal, siginfo_t *i_pSigInfo, void *i_pContext)
 
 ////////////////////////////////////////////////////////////////////////////////
 //ChInstall
-static tBOOL ChInstall(fnCrashHandler i_fnHandler)
+static __attribute__ ((unused)) tBOOL ChInstall(fnCrashHandler i_fnHandler)
 {
     struct sigaction l_sSignal;
     struct sigaction l_sSignalPipe;
@@ -160,7 +178,7 @@ static tBOOL ChInstall(fnCrashHandler i_fnHandler)
 
 ////////////////////////////////////////////////////////////////////////////////
 //ChUnInstall
-static tBOOL ChUnInstall()
+static __attribute__ ((unused)) tBOOL ChUnInstall()
 {
     return TRUE;
 }//ChUnInstall

@@ -1052,41 +1052,38 @@ namespace P7
                         String        i_sMessage
                        )
         {
-            StackTrace    l_cSt      = new StackTrace(true);
-            StackFrame    l_cSf      = l_cSt.GetFrame(i_dwStackFrame);
-            System.UInt32 l_dwReturn = 0;
+            StackTrace    l_cSt          = new StackTrace(true);
+            StackFrame    l_cSf          = l_cSt.GetFrame(i_dwStackFrame);
+            System.UInt32 l_dwReturn     = 0;
+            int           l_iLineNumber  = 0;
+            string        l_sMethodName  = null;
+            string        l_sFileName    = null;
 
             if (null != l_cSf)
             {
-                string l_sMn = (null != l_cSf.GetMethod()) ? l_cSf.GetMethod().Name : "<Optimized>";
+                System.Reflection.MethodBase l_cMethod = l_cSf.GetMethod();
 
-                 l_dwReturn = P7_Trace_Managed(m_hHandle,
-                                               i_wTraceId,
-                                               (UInt32)i_eLevel,
-                                               i_hModule,
-                                               (UInt16)l_cSf.GetFileLineNumber(),
-                                               l_cSf.GetFileName(),
-                                               l_sMn,
-                                               i_sMessage
-                                              );
-            }
-            else
-            {
-                l_dwReturn = P7_Trace_Managed(m_hHandle,
-                                              i_wTraceId,
-                                              (UInt32)i_eLevel,
-                                              i_hModule,
-                                              0,
-                                              "<Optimized>",
-                                              "<Optimized>",
-                                              i_sMessage
-                                             );
+                if (null != l_cMethod)
+                {
+                    l_sMethodName = l_cMethod.Name;
+                }
+
+                l_sFileName   = l_cSf.GetFileName();
+                l_iLineNumber = l_cSf.GetFileLineNumber();
             }
 
+            l_dwReturn = P7_Trace_Managed(m_hHandle,
+                                          i_wTraceId,
+                                          (UInt32)i_eLevel,
+                                          i_hModule,
+                                          (UInt16)l_iLineNumber,
+                                          (null != l_sFileName) ? l_sFileName : "<optimized>",
+                                          (null != l_sMethodName) ? l_sMethodName : "<optimized>",
+                                          i_sMessage
+                                         );
 
-
-            l_cSt = null;
             l_cSf = null;
+            l_cSt = null;
 
             return (0 != l_dwReturn) ? true : false;
         }
