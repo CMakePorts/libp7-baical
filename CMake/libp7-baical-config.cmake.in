@@ -1,0 +1,5 @@
+@PACKAGE_INIT@
+
+include(${CMAKE_CURRENT_LIST_DIR}/libp7-baical-targets.cmake)
+
+check_required_components(libp7-baical)
