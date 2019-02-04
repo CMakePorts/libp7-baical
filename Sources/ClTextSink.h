@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 //                                                                             /
-// 2012-2017 (c) Baical                                                        /
+// 2012-2019 (c) Baical                                                        /
 //                                                                             /
 // This library is free software; you can redistribute it and/or               /
 // modify it under the terms of the GNU Lesser General Public                  /
@@ -93,6 +93,7 @@ public:
                               ) = 0;
 
     virtual eClient_Status TryRoll() { return ECLIENT_STATUS_OK; }
+    virtual eClient_Status DumpBuffers() = 0;
 };
 
 
