@@ -492,6 +492,8 @@ tBOOL CTxtChannel::Format(sP7Trace_Data *i_pData, CClTextSink::sLog &o_rLog)
     tUINT8       *l_pValues   = ((tUINT8*)i_pData) + sizeof(sP7Trace_Data);
     sRbThread    *l_pRbThread = NULL;
     int           l_iCount    = 0;
+    tUINT8       *l_pExt      = (tUINT8*)i_pData + i_pData->sCommon.dwSize - 1;
+    tUINT8        l_bCount    = l_pExt[0];
 
     l_pDesc = m_cDesc[i_pData->wID];
     
@@ -503,7 +505,18 @@ tBOOL CTxtChannel::Format(sP7Trace_Data *i_pData, CClTextSink::sLog &o_rLog)
         goto l_lblExit;
     }
 
+    o_rLog.dwModuleID = 0u;
 
+    while (l_bCount--) //Parse extensions, there is no need to check the presence, it is always here because of using locally
+    {
+        --l_pExt;
+        if (EP7TRACE_EXT_MODULE_ID == l_pExt[0])
+        {
+            l_pExt -= 2;
+            o_rLog.dwModuleID = *(tUINT16*)l_pExt;
+            --l_pExt;
+        }
+    }
 
     while (!l_iCount)
     {
@@ -551,10 +564,10 @@ tBOOL CTxtChannel::Format(sP7Trace_Data *i_pData, CClTextSink::sLog &o_rLog)
         }
     }
 
-    if (m_cModules[l_pDesc->dwModuleID])
+    if (m_cModules[o_rLog.dwModuleID])
     {
-        o_rLog.pModuleName  = m_cModules[l_pDesc->dwModuleID]->pName;
-        o_rLog.szModuleName = m_cModules[l_pDesc->dwModuleID]->szName;
+        o_rLog.pModuleName  = m_cModules[o_rLog.dwModuleID]->pName;
+        o_rLog.szModuleName = m_cModules[o_rLog.dwModuleID]->szName;
     }
     else
     {
@@ -1929,7 +1942,7 @@ void CClText::FormatModuleId(CClText *i_pClient)
     tINT32 l_iRes = PSPrint(i_pClient->m_pMsgCur,
                             i_pClient->m_szMsg - (i_pClient->m_pMsgCur - i_pClient->m_pMsg),
                             TM("%03d"),
-                            i_pClient->m_sLog.pDesc->dwModuleID
+                            i_pClient->m_sLog.dwModuleID
                            );
     if (0 < l_iRes)
     {
