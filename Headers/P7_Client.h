@@ -56,6 +56,7 @@
 #define P7_CLIENT_H
 
 #include "GTypes.h"
+#include "P7_Version.h"
 
 #define CLIENT_DEFAULT_SHARED_NAME                             TM("P7.Client")
 

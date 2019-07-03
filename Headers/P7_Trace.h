@@ -258,7 +258,7 @@ public:
 //See documentation for details.
 extern "C" P7_EXPORT IP7_Trace * __cdecl P7_Create_Trace(IP7_Client         *i_pClient,
                                                          const tXCHAR       *i_pName,
-                                                         const stTrace_Conf *i_pConf = NULL
+                                                         const stTrace_Conf *i_pConf = 0
                                                         );
 
 

@@ -291,7 +291,8 @@ static void Test_02_Embedded_Trace(IP7_Trace         *i_pTrace,
 static THSHELL_RET_TYPE THSHELL_CALL_TYPE Test_02_Routine(void *i_pContext)
 {
     sTest_02_Thread   *l_pParam     = (sTest_02_Thread*)i_pContext;
-    IP7_Trace::hModule l_hModule    = NULL;
+    const size_t       l_szModules  = 16;
+    IP7_Trace::hModule l_hModules[l_szModules] = {};
     IP7_Trace         *l_pTrace     = NULL;
     tUINT32            l_dwSent     = 0;
     tUINT32            l_dwRejected = 0;
@@ -315,10 +316,13 @@ static THSHELL_RET_TYPE THSHELL_CALL_TYPE Test_02_Routine(void *i_pContext)
         return 0;
     }
 
-    SPRINTF(l_pName, TM("Module #%d"), l_pParam->dwIndex);
-    if (!l_pTrace->Register_Module(l_pName, &l_hModule))
+    for (size_t l_szI = 0; l_szI < l_szModules; l_szI++)
     {
-        printf("Thread %d: Error: Register_Module() failed\n", l_pParam->dwIndex);
+        SPRINTF(l_pName, TM("Module #%d:%d"), l_pParam->dwIndex, (int)l_szI);
+        if (!l_pTrace->Register_Module(l_pName, &l_hModules[l_szI]))
+        {
+            printf("Thread %d: Error: Register_Module() failed\n", l_pParam->dwIndex);
+        }
     }
 
     SPRINTF(l_pName, TM("Thread #%d"), l_pParam->dwIndex);
@@ -330,7 +334,7 @@ static THSHELL_RET_TYPE THSHELL_CALL_TYPE Test_02_Routine(void *i_pContext)
     l_pTrace->Set_Verbosity(NULL, EP7TRACE_LEVEL_TRACE);
 
     Test_02_Embedded_Trace(l_pTrace,
-                           l_hModule,
+                           l_hModules[0],
                            TM("Create thread %X"), 
                            CProc::Get_Thread_Id()
                           );
@@ -341,7 +345,7 @@ static THSHELL_RET_TYPE THSHELL_CALL_TYPE Test_02_Routine(void *i_pContext)
         {
             l_qwIDX++;
             if (l_pTrace->P7_QTRACE(1, 
-                                    l_hModule,
+                                    l_hModules[(size_t)l_qwIDX % l_szModules],
                                     TM("Test 1[%I64d] %d, %d, %s %d"), 
                                     l_qwIDX, 
                                     10, 
@@ -361,7 +365,7 @@ static THSHELL_RET_TYPE THSHELL_CALL_TYPE Test_02_Routine(void *i_pContext)
             if (0 == (l_qwIDX % 10))
             {
                 l_qwIDX ++;
-                if (l_pTrace->P7_DEBUG(l_hModule, TM("Debug message(3) %s %d, %I64d"), TM("P7_DEBUG"), l_dwSent, l_qwIDX))
+                if (l_pTrace->P7_DEBUG(l_hModules[(size_t)l_qwIDX % l_szModules], TM("Debug message(3) %s %d, %I64d"), TM("P7_DEBUG"), l_dwSent, l_qwIDX))
                 {
                     l_dwSent ++;
                 }
@@ -374,7 +378,7 @@ static THSHELL_RET_TYPE THSHELL_CALL_TYPE Test_02_Routine(void *i_pContext)
             if (0 == (l_qwIDX % 22))
             {
                 l_qwIDX ++;
-                if (l_pTrace->P7_INFO(l_hModule, TM("Info message(1) %s"), TM("P7_INFO")))
+                if (l_pTrace->P7_INFO(l_hModules[(size_t)l_qwIDX % l_szModules], TM("Info message(1) %s"), TM("P7_INFO")))
                 {
                     l_dwSent ++;
                 }
@@ -387,7 +391,7 @@ static THSHELL_RET_TYPE THSHELL_CALL_TYPE Test_02_Routine(void *i_pContext)
             if (0 == (l_qwIDX % 153))
             {
                 l_qwIDX ++;
-                if (l_pTrace->P7_WARNING(l_hModule, TM("Warning message(1) %d"), l_dwSent))
+                if (l_pTrace->P7_WARNING(l_hModules[(size_t)l_qwIDX % l_szModules], TM("Warning message(1) %d"), l_dwSent))
                 {
                     l_dwSent ++;
                 }
@@ -401,7 +405,7 @@ static THSHELL_RET_TYPE THSHELL_CALL_TYPE Test_02_Routine(void *i_pContext)
             if (0 == (l_qwIDX % 155))
             {
                 l_qwIDX ++;
-                if (l_pTrace->P7_ERROR(l_hModule, TM("ERROR message(2) %I64d, %s"), l_qwIDX, TM("P7_ERROR")))
+                if (l_pTrace->P7_ERROR(l_hModules[(size_t)l_qwIDX % l_szModules], TM("ERROR message(2) %I64d, %s"), l_qwIDX, TM("P7_ERROR")))
                 {
                     l_dwSent ++;
                 }
@@ -428,12 +432,12 @@ static THSHELL_RET_TYPE THSHELL_CALL_TYPE Test_02_Routine(void *i_pContext)
     }//while (WAIT_TIMEOUT == WaitForSingleObject(g_pEvent_Exit, 10))
 
     Test_02_Embedded_Trace(l_pTrace, 
-                           l_hModule,
+                           l_hModules[0],
                            TM("Leave thread %X"), 
                            CProc::Get_Thread_Id()
                           );
 
-    l_pTrace->P7_CRITICAL(l_hModule, TM("All done, bye bye"), 0);
+    l_pTrace->P7_CRITICAL(l_hModules[0], TM("All done, bye bye"), 0);
 
     if (!l_pTrace->Unregister_Thread(0))
     {

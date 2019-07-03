@@ -136,7 +136,7 @@ class CP7Telemetry
     sP7C_Status             m_sStatus;
                            
     sP7C_Data_Chunk        *m_pChunks;
-    tUINT32                 m_dwChunks_Max_Count; //LAU: increase 
+    tUINT32                 m_dwChunks_Max_Count; 
                            
     tBOOL                   m_bIs_Channel;
                            

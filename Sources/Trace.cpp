@@ -2158,6 +2158,7 @@ tBOOL CP7Trace::Trace_Managed(tUINT16            i_wTrace_ID,
     tUINT32          l_dwSize   = 0;
     CP7Trace_Desc   *l_pDesc    = NULL; 
     tBOOL            l_bDesc    = FALSE;
+    size_t           l_szTrace  = 0;
     sP7C_Data_Chunk *l_pChunk; //we do not initialize it here, we do it later
 
     LOCK_ENTER(m_sCS);
@@ -2290,10 +2291,6 @@ tBOOL CP7Trace::Trace_Managed(tUINT16            i_wTrace_ID,
         l_pChunk ++;
     }
 
-    //adding trace parameters to chunk
-    SET_EXT_HEADER_SIZE(m_sHeader_Data.sCommonRaw, sizeof(m_sHeader_Data));
-    //m_sHeader_Data.sCommon.dwSize = sizeof(m_sHeader_Data); 
-
     m_sHeader_Data.bLevel     = (tUINT8)i_eLevel;
     m_sHeader_Data.bProcessor = (tUINT8)CProc::Get_Processor();
     m_sHeader_Data.dwThreadID = CProc::Get_Thread_Id();
@@ -2312,6 +2309,11 @@ tBOOL CP7Trace::Trace_Managed(tUINT16            i_wTrace_ID,
     l_pChunk->dwSize = sizeof(m_sHeader_Data);
     l_pChunk->pData  = &m_sHeader_Data;
 
+    //we should also add all variable parameters length ... later
+    l_szTrace = sizeof(m_sHeader_Data);
+    //SET_EXT_HEADER_SIZE(m_sHeader_Data.sCommonRaw, );
+    //m_sHeader_Data.sCommon.dwSize = sizeof(m_sHeader_Data); 
+
     l_pChunk ++;
 
     //adding string message to chunk
@@ -2322,12 +2324,37 @@ tBOOL CP7Trace::Trace_Managed(tUINT16            i_wTrace_ID,
 
     l_pChunk->dwSize = (tUINT32)((PStrLen(i_pMessage) + 1) * sizeof(tXCHAR));
     l_pChunk->pData  = (void*)i_pMessage;
+    l_szTrace       += l_pChunk->dwSize;
 
-    SET_EXT_HEADER_SIZE(m_sHeader_Data.sCommonRaw, GET_EXT_HEADER_SIZE(m_sHeader_Data.sCommonRaw) + l_pChunk->dwSize);
-    //m_sHeader_Data.sCommon.dwSize += l_pChunk->dwSize;
     l_pChunk++;
 
-    l_dwSize += GET_EXT_HEADER_SIZE(m_sHeader_Data.sCommonRaw);
+    //Put extensions.../////////////////////////////////////////////////////////////
+    if (i_hModule)
+    {
+    #if defined(__linux__) //fix alignment and GCC warnings
+        memcpy(m_pExtensions, &(((sP7Trace_Module*)i_hModule)->wModuleID), sizeof(tUINT16));
+    #else
+        *(tUINT16*)m_pExtensions = ((sP7Trace_Module*)i_hModule)->wModuleID;
+    #endif
+
+        m_pExtensions[2]         = (tUINT8)EP7TRACE_EXT_MODULE_ID;
+        m_pExtensions[3]         = 1;
+        l_pChunk->pData          = m_pExtensions;
+        l_pChunk->dwSize         = 4u;
+    }
+    else
+    {
+        m_pExtensions[0]         = 0;
+        l_pChunk->pData          = m_pExtensions;
+        l_pChunk->dwSize         = 1u;
+    }
+
+    l_szTrace += l_pChunk->dwSize;
+    SET_EXT_HEADER_SIZE(m_sHeader_Data.sCommonRaw, l_szTrace);
+    l_pChunk ++;
+
+
+    l_dwSize += (tUINT32)l_szTrace;
 
     if (ECLIENT_STATUS_OK != m_pClient->Sent(m_dwChannel_ID,
                                              m_pChk_Head,
