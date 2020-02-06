@@ -9,7 +9,7 @@ include(GenerateExportHeader)
 include(CMakePackageConfigHelpers)
 
 set(P7_MAJOR_VERSION 5)
-set(P7_MINOR_VERSION 0)
+set(P7_MINOR_VERSION 2)
 set(P7_PATCH_VERSION 0)
 set(P7_VERSION ${P7_MAJOR_VERSION}.${P7_MINOR_VERSION}.${P7_PATCH_VERSION})
 
